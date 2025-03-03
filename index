@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Cirurgias - Hospital Metropolitano</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f8f9fa;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .logo {
+            height: 60px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-container h1 {
+            margin-left: 15px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+        
+        .dashboard {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .card {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: #555;
+        }
+        
+        .card p {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button i {
+            margin-right: 5px;
+        }
+        
+        .button-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .button-success {
+            background-color: var(--success-color);
+        }
+        
+        .button-warning {
+            background-color: var(--warning-color);
+            color: #212529;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .actions button {
+            padding: 5px 10px;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            background-color: white;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .filter-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .print-container {
+            display: none;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-container {
+                display: block;
+                width: 100%;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        
+        .pagination li {
+            margin: 0 5px;
+        }
+        
+        .pagination button {
+            padding: 5px 10px;
+            background-color: var(--secondary-color);
+            color: #333;
+            border: 1px solid var(--border-color);
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <h1>Sistema de Controle de Cirurgias - Hospital Metropolitano</h1>
+            </div>
+            <div>
+                <span id="current-month"></span>
+            </div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total de Cirurgias no Mês</h3>
+                <p id="total-cirurgias">0</p>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="registro">Registro de Cirurgias</div>
+                <div class="tab" data-tab="relatorios">Relatórios</div>
+                <div class="tab" data-tab="profissionais">Profissionais</div>
+            </div>
+            
+            <div id="registro" class="tab-content active">
+                <h2>Registrar Nova Cirurgia</h2>
+                <form id="cirurgia-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="data">Data da Cirurgia:</label>
+                            <input type="date" id="data" name="data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paciente">Nome do Paciente:</label>
+                            <input type="text" id="paciente" name="paciente" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cirurgiao">Cirurgião Principal:</label>
+                            <select id="cirurgiao" name="cirurgiao" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="primeiro-auxiliar">1º Auxiliar:</label>
+                            <select id="primeiro-auxiliar" name="primeiro-auxiliar" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="segundo-auxiliar">2º Auxiliar:</label>
+                            <select id="segundo-auxiliar" name="segundo-auxiliar" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="button-success">
+                            <i>✚</i> Registrar Cirurgia
+                        </button>
+                        <button type="button" id="add-profissional" class="button-warning">
+                            <i>👤</i> Adicionar Novo Profissional
+                        </button>
+                    </div>
+                </form>
+                
+                <h2>Cirurgias Registradas</h2>
+                <div class="filter-container">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="filtro-data-inicio">Data Inicial:</label>
+                            <input type="date" id="filtro-data-inicio">
+                        </div>
+                        <div class="form-group">
+                            <label for="filtro-data-fim">Data Final:</label>
+                            <input type="date" id="filtro-data-fim">
+                        </div>
+                        <div class="form-group">
+                            <label for="filtro-profissional">Profissional:</label>
+                            <select id="filtro-profissional">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-buttons">
+                        <button id="btn-filtrar" class="button-success">Filtrar</button>
+                        <button id="btn-limpar-filtro">Limpar Filtros</button>
+                    </div>
+                </div>
+                
+                <table id="tabela-cirurgias">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Paciente</th>
+                            <th>Cirurgião</th>
+                            <th>1º Auxiliar</th>
+                            <th>2º Auxiliar</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Os dados serão inseridos via JavaScript -->
+                    </tbody>
+                </table>
+                
+                <ul class="pagination" id="paginacao">
+                    <!-- A paginação será gerada via JavaScript -->
+                </ul>
+            </div>
+            
+            <div id="relatorios" class="tab-content">
+                <h2>Relatórios</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="relatorio-data-inicio">Data Inicial:</label>
+                        <input type="date" id="relatorio-data-inicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="relatorio-data-fim">Data Final:</label>
+                        <input type="date" id="relatorio-data-fim">
+                    </div>
+                    <div class="form-group">
+                        <label for="relatorio-tipo">Tipo de Relatório:</label>
+                        <select id="relatorio-tipo">
+                            <option value="diario">Relatório Diário</option>
+                            <option value="mensal">Relatório Mensal</option>
+                            <option value="profissional">Relatório por Profissional</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="relatorio-profissional-container" style="display: none;">
+                    <label for="relatorio-profissional">Profissional:</label>
+                    <select id="relatorio-profissional">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button id="btn-gerar-relatorio" class="button-success">
+                        <i>📊</i> Gerar Relatório
+                    </button>
+                    <button id="btn-imprimir-relatorio">
+                        <i>🖨️</i> Imprimir Relatório
+                    </button>
+                </div>
+                
+                <div id="relatorio-preview">
+                    <!-- O relatório será gerado aqui -->
+                </div>
+            </div>
+            
+            <div id="profissionais" class="tab-content">
+                <h2>Gerenciar Profissionais</h2>
+                
+                <div id="form-profissional-container">
+                    <form id="profissional-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nome-profissional">Nome:</label>
+                                <input type="text" id="nome-profissional" name="nome-profissional" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="button-success" id="btn-adicionar-profissional">
+                                <i>✚</i> Adicionar Profissional
+                            </button>
+                            <button type="button" id="btn-cancelar-edicao" style="display: none;">
+                                <i>✖</i> Cancelar Edição
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <table id="tabela-profissionais">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Total como Principal</th>
+                            <th>Total como 1º Auxiliar</th>
+                            <th>Total como 2º Auxiliar</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Os dados serão inseridos via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Container de impressão -->
+        <div class="print-container" id="print-container">
+            <!-- O conteúdo para impressão será gerado aqui -->
+        </div>
+        
+    </div>
+    
+    <!-- Modal para edição de registro -->
+    <div id="modal-editar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: relative; width: 80%; max-width: 600px; margin: 50px auto; background-color: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+            <button id="btn-fechar-modal" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer;">✖</button>
+            <h2>Editar Registro</h2>
+            <form id="form-editar-cirurgia">
+                <input type="hidden" id="editar-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editar-data">Data da Cirurgia:</label>
+                        <input type="date" id="editar-data" name="editar-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar-paciente">Nome do Paciente:</label>
+                        <input type="text" id="editar-paciente" name="editar-paciente" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editar-cirurgiao">Cirurgião Principal:</label>
+                        <select id="editar-cirurgiao" name="editar-cirurgiao" required>
+                            <option value="">Selecione</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar-primeiro-auxiliar">1º Auxiliar:</label>
+                        <select id="editar-primeiro-auxiliar" name="editar-primeiro-auxiliar" required>
+                            <option value="">Selecione</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar-segundo-auxiliar">2º Auxiliar:</label>
+                        <select id="editar-segundo-auxiliar" name="editar-segundo-auxiliar" required>
+                            <option value="">Selecione</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="button-success">
+                        <i>💾</i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let cirurgias = [];
+        let profissionais = [];
+        let cirurgiaEditandoId = null;
+        let profissionalEditandoId = null;
+        let paginaAtual = 1;
+        const itensPorPagina = 10;
+        
+        // Inicializar o sistema
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarSistema();
+            atualizarDataAtual();
+            carregarLocalStorage();
+            preencherSelects();
+            atualizarTabelaCirurgias();
+            atualizarTabelaProfissionais();
+            atualizarDashboard();
+            configurarEventListeners();
+            configurarTabs();
+        });
+        
+        // Função para atualizar a data atual
+        function atualizarDataAtual() {
+            const data = new Date();
+            const mes = data.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('current-month').textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
+            
+            // Define as datas padrão para os filtros
+            const primeiroDiaMes = new Date(data.getFullYear(), data.getMonth(), 1);
+            const ultimoDiaMes = new Date(data.getFullYear(), data.getMonth() + 1, 0);
+            
+            const formatarData = (data) => {
+                return data.toISOString().split('T')[0];
+            };
+            
+            // Define datas padrão para os filtros
+            document.getElementById('filtro-data-inicio').value = formatarData(primeiroDiaMes);
+            document.getElementById('filtro-data-fim').value = formatarData(ultimoDiaMes);
+            document.getElementById('relatorio-data-inicio').value = formatarData(primeiroDiaMes);
+            document.getElementById('relatorio-data-fim').value = formatarData(ultimoDiaMes);
+            
+            // Define a data padrão para o registro de cirurgia como hoje
+            document.getElementById('data').value = formatarData(data);
+        }
+        
+        // Função para inicializar o sistema
+        function inicializarSistema() {
+            // Adiciona alguns profissionais de exemplo se não houver nenhum
+            if (!localStorage.getItem('profissionais')) {
+                profissionais = [
+                    { id: 1, nome: 'Dr. João Silva', especialidade: 'Cirurgia Geral' },
+                    { id: 2, nome: 'Dra. Maria Oliveira', especialidade: 'Cirurgia Cardíaca' },
+                    { id: 3, nome: 'Dr. Carlos Santos', especialidade: 'Cirurgia Ortopédica' }
+                ];
+                salvarLocalStorage();
+            }
+        }
+        
+        // Função para carregar dados do localStorage
+        function carregarLocalStorage() {
+            if (localStorage.getItem('cirurgias')) {
+                cirurgias = JSON.parse(localStorage.getItem('cirurgias'));
+            }
+            
+            if (localStorage.getItem('profissionais')) {
+                profissionais = JSON.parse(localStorage.getItem('profissionais'));
+            }
+        }
+        
+        // Função para salvar dados no localStorage
+        function salvarLocalStorage() {
+            localStorage.setItem('cirurgias', JSON.stringify(cirurgias));
+            localStorage.setItem('profissionais', JSON.stringify(profissionais));
+        }
+        
+        // Função para preencher os selects com os profissionais
+        function preencherSelects() {
+            const selects = [
+                'cirurgiao', 
+                'primeiro-auxiliar', 
+                'segundo-auxiliar', 
+                'filtro-profissional',
+                'relatorio-profissional',
+                'editar-cirurgiao',
+                'editar-primeiro-auxiliar',
+                'editar-segundo-auxiliar'
+            ];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Selecione</option>';
+                
+                profissionais.forEach(profissional => {
+                    const option = document.createElement('option');
+                    option.value = profissional.id;
+                    option.textContent = profissional.nome;
+                    select.appendChild(option);
+                });
+            });
+        }
+        
+        // Função para atualizar a tabela de cirurgias
+        function atualizarTabelaCirurgias() {
+            const tbody = document.querySelector('#tabela-cirurgias tbody');
+            tbody.innerHTML = '';
+            
+            // Aplicar filtros
+            const filtroDataInicio = document.getElementById('filtro-data-inicio').value;
+            const filtroDataFim = document.getElementById('filtro-data-fim').value;
+            const filtroProfissional = document.getElementById('filtro-profissional').value;
+            
+            let cirurgiasFiltradas = cirurgias;
+            
+            if (filtroDataInicio) {
+                cirurgiasFiltradas = cirurgiasFiltradas.filter(c => c.data >= filtroDataInicio);
+            }
+            
+            if (filtroDataFim) {
+                cirurgiasFiltradas = cirurgiasFiltradas.filter(c => c.data <= filtroDataFim);
+            }
+            
+            if (filtroProfissional) {
+                cirurgiasFiltradas = cirurgiasFiltradas.filter(c => 
+                    c.cirurgiao === filtroProfissional || 
+                    c.primeiroAuxiliar === filtroProfissional || 
+                    c.segundoAuxiliar === filtroProfissional
+                );
+            }
+            
+            // Ordenar por data (mais recente primeiro)
+            cirurgiasFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            // Paginação
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const cirurgiasPagina = cirurgiasFiltradas.slice(inicio, fim);
+            
+            if (cirurgiasPagina.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 7;
+                td.textContent = 'Nenhuma cirurgia registrada no período.';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+            } else {
+                cirurgiasPagina.forEach(cirurgia => {
+                    const tr = document.createElement('tr');
+                    
+                    // Formatação da data
+                    const dataParts = cirurgia.data.split('-');
+                    const dataFormatada = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+                    
+                    // Criar células
+                    const tdData = document.createElement('td');
+                    tdData.textContent = dataFormatada;
+                    
+                    const tdPaciente = document.createElement('td');
+                    tdPaciente.textContent = cirurgia.paciente;
+                    
+                    const tdCirurgiao = document.createElement('td');
+                    tdCirurgiao.textContent = buscarNomeProfissional(cirurgia.cirurgiao);
+                    
+                    const tdPrimeiroAuxiliar = document.createElement('td');
+                    tdPrimeiroAuxiliar.textContent = buscarNomeProfissional(cirurgia.primeiroAuxiliar);
+                    
+                    const tdSegundoAuxiliar = document.createElement('td');
+                    tdSegundoAuxiliar.textContent = buscarNomeProfissional(cirurgia.segundoAuxiliar);
+                    
+                    const tdAcoes = document.createElement('td');
+                    tdAcoes.className = 'actions';
+                    
+                    const btnEditar = document.createElement('button');
+                    btnEditar.innerHTML = '<i>✏️</i>';
+                    btnEditar.title = 'Editar';
+                    btnEditar.onclick = () => abrirModalEditar(cirurgia.id);
+                    
+                    const btnExcluir = document.createElement('button');
+                    btnExcluir.innerHTML = '<i>🗑️</i>';
+                    btnExcluir.className = 'button-danger';
+                    btnExcluir.title = 'Excluir';
+                    btnExcluir.onclick = () => excluirCirurgia(cirurgia.id);
+                    
+                    tdAcoes.appendChild(btnEditar);
+                    tdAcoes.appendChild(btnExcluir);
+                    
+                    tr.appendChild(tdData);
+                    tr.appendChild(tdPaciente);
+                    tr.appendChild(tdCirurgiao);
+                    tr.appendChild(tdPrimeiroAuxiliar);
+                    tr.appendChild(tdSegundoAuxiliar);
+                    tr.appendChild(tdAcoes);
+                    
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            atualizarPaginacao(cirurgiasFiltradas.length);
+        }
+        
+        // Função para atualizar a paginação
+        function atualizarPaginacao(totalItens) {
+            const paginacao = document.getElementById('paginacao');
+            paginacao.innerHTML = '';
+            
+            const totalPaginas = Math.ceil(totalItens / itensPorPagina);
+            
+            // Botão anterior
+            const liAnterior = document.createElement('li');
+            const btnAnterior = document.createElement('button');
+            btnAnterior.textContent = 'Anterior';
+            btnAnterior.disabled = paginaAtual === 1;
+            btnAnterior.onclick = () => {
+                if (paginaAtual > 1) {
+                    paginaAtual--;
+                    atualizarTabelaCirurgias();
+                }
+            };
+            liAnterior.appendChild(btnAnterior);
+            paginacao.appendChild(liAnterior);
+            
+            // Páginas numéricas
+            const maxPaginas = 5; // Máximo de botões de página mostrados
+            let startPage = Math.max(1, paginaAtual - Math.floor(maxPaginas / 2));
+            let endPage = Math.min(totalPaginas, startPage + maxPaginas - 1);
+            
+            if (endPage - startPage + 1 < maxPaginas && startPage > 1) {
+                startPage = Math.max(1, endPage - maxPaginas + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === paginaAtual ? 'active' : '';
+                btn.onclick = () => {
+                    paginaAtual = i;
+                    atualizarTabelaCirurgias();
+                };
+                li.appendChild(btn);
+                paginacao.appendChild(li);
+            }
+            
+            // Botão próximo
+            const liProximo = document.createElement('li');
+            const btnProximo = document.createElement('button');
+            btnProximo.textContent = 'Próximo';
+            btnProximo.disabled = paginaAtual === totalPaginas || totalPaginas === 0;
+            btnProximo.onclick = () => {
+                if (paginaAtual < totalPaginas) {
+                    paginaAtual++;
+                    atualizarTabelaCirurgias();
+                }
+            };
+            liProximo.appendChild(btnProximo);
+            paginacao.appendChild(liProximo);
+        }
+        
+        // Função para atualizar a tabela de profissionais
+        function atualizarTabelaProfissionais() {
+            const tbody = document.querySelector('#tabela-profissionais tbody');
+            tbody.innerHTML = '';
+            
+            if (profissionais.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 6;
+                td.textContent = 'Nenhum profissional cadastrado.';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+            
+            profissionais.forEach(profissional => {
+                const tr = document.createElement('tr');
+                
+                const tdNome = document.createElement('td');
+                tdNome.textContent = profissional.nome;
+                
+                // Contar cirurgias por função
+                const totalPrincipal = cirurgias.filter(c => c.cirurgiao == profissional.id).length;
+                const totalPrimeiroAuxiliar = cirurgias.filter(c => c.primeiroAuxiliar == profissional.id).length;
+                const totalSegundoAuxiliar = cirurgias.filter(c => c.segundoAuxiliar == profissional.id).length;
+                
+                const tdTotalPrincipal = document.createElement('td');
+                tdTotalPrincipal.textContent = totalPrincipal;
+                tdTotalPrincipal.style.textAlign = 'center';
+                
+                const tdTotalPrimeiroAuxiliar = document.createElement('td');
+                tdTotalPrimeiroAuxiliar.textContent = totalPrimeiroAuxiliar;
+                tdTotalPrimeiroAuxiliar.style.textAlign = 'center';
+                
+                const tdTotalSegundoAuxiliar = document.createElement('td');
+                tdTotalSegundoAuxiliar.textContent = totalSegundoAuxiliar;
+                tdTotalSegundoAuxiliar.style.textAlign = 'center';
+                
+                const tdAcoes = document.createElement('td');
+                tdAcoes.className = 'actions';
+                
+                const btnEditar = document.createElement('button');
+                btnEditar.innerHTML = '<i>✏️</i>';
+                btnEditar.title = 'Editar';
+                btnEditar.onclick = () => editarProfissional(profissional.id);
+                
+                const btnExcluir = document.createElement('button');
+                btnExcluir.innerHTML = '<i>🗑️</i>';
+                btnExcluir.className = 'button-danger';
+                btnExcluir.title = 'Excluir';
+                btnExcluir.onclick = () => excluirProfissional(profissional.id);
+                
+                tdAcoes.appendChild(btnEditar);
+                tdAcoes.appendChild(btnExcluir);
+                
+                tr.appendChild(tdNome);
+                tr.appendChild(tdTotalPrincipal);
+                tr.appendChild(tdTotalPrimeiroAuxiliar);
+                tr.appendChild(tdTotalSegundoAuxiliar);
+                tr.appendChild(tdAcoes);
+                
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Função para atualizar o dashboard
+        function atualizarDashboard() {
+            // Obter o mês atual
+            const hoje = new Date();
+            const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+            const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+            
+            // Filtrar cirurgias do mês atual
+            const cirurgiasMes = cirurgias.filter(c => 
+                c.data >= primeiroDiaMes && c.data <= ultimoDiaMes
+            );
+            
+            // Contar totais
+            const totalCirurgias = cirurgiasMes.length;
+            
+            // Atualizar os elementos
+            document.getElementById('total-cirurgias').textContent = totalCirurgias;
+        }
+        
+        // Função para retornar o profissional logado (simplificado para este exemplo)
+        function profissionalLogado() {
+            // Na prática, isso viria de um sistema de autenticação
+            // Para este exemplo, estamos assumindo o primeiro profissional da lista
+            return profissionais.length > 0 ? profissionais[0].id : null;
+        }
+        
+        // Função para buscar o nome de um profissional pelo ID
+        function buscarNomeProfissional(id) {
+            const profissional = profissionais.find(p => p.id == id);
+            return profissional ? profissional.nome : 'Não encontrado';
+        }
+        
+        // Função para abrir o modal de edição
+        function abrirModalEditar(id) {
+            const modal = document.getElementById('modal-editar');
+            modal.style.display = 'block';
+            
+            const cirurgia = cirurgias.find(c => c.id === id);
+            if (cirurgia) {
+                document.getElementById('editar-id').value = cirurgia.id;
+                document.getElementById('editar-data').value = cirurgia.data;
+                document.getElementById('editar-paciente').value = cirurgia.paciente;
+                // Campo procedimento foi removido
+                document.getElementById('editar-cirurgiao').value = cirurgia.cirurgiao;
+                document.getElementById('editar-primeiro-auxiliar').value = cirurgia.primeiroAuxiliar;
+                document.getElementById('editar-segundo-auxiliar').value = cirurgia.segundoAuxiliar;
+            }
+            
+            cirurgiaEditandoId = id;
+        }
+        
+        // Função para fechar o modal de edição
+        function fecharModalEditar() {
+            document.getElementById('modal-editar').style.display = 'none';
+            cirurgiaEditandoId = null;
+        }
+        
+        // Função para excluir uma cirurgia
+        function excluirCirurgia(id) {
+            if (confirm('Tem certeza que deseja excluir esta cirurgia?')) {
+                cirurgias = cirurgias.filter(c => c.id !== id);
+                salvarLocalStorage();
+                atualizarTabelaCirurgias();
+                atualizarDashboard();
+                atualizarTabelaProfissionais();
+            }
+        }
+        
+        // Função para editar um profissional
+        function editarProfissional(id) {
+            const profissional = profissionais.find(p => p.id === id);
+            if (profissional) {
+                document.getElementById('nome-profissional').value = profissional.nome;
+                
+                document.getElementById('btn-adicionar-profissional').textContent = 'Salvar Alterações';
+                document.getElementById('btn-cancelar-edicao').style.display = 'inline-block';
+                
+                profissionalEditandoId = id;
+            }
+        }
+        
+        // Função para cancelar a edição de profissional
+        function cancelarEdicaoProfissional() {
+            document.getElementById('profissional-form').reset();
+            document.getElementById('btn-adicionar-profissional').innerHTML = '<i>✚</i> Adicionar Profissional';
+            document.getElementById('btn-cancelar-edicao').style.display = 'none';
+            profissionalEditandoId = null;
+        }
+        
+        // Função para excluir um profissional
+        function excluirProfissional(id) {
+            // Verificar se o profissional está em alguma cirurgia
+            const emUso = cirurgias.some(c => 
+                c.cirurgiao == id || 
+                c.primeiroAuxiliar == id || 
+                c.segundoAuxiliar == id
+            );
+            
+            if (emUso) {
+                alert('Não é possível excluir este profissional pois ele está associado a uma ou mais cirurgias.');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este profissional?')) {
+                profissionais = profissionais.filter(p => p.id !== id);
+                salvarLocalStorage();
+                preencherSelects();
+                atualizarTabelaProfissionais();
+            }
+        }
+        
+        // Função para gerar relatório
+        function gerarRelatorio() {
+            const tipoRelatorio = document.getElementById('relatorio-tipo').value;
+            const dataInicio = document.getElementById('relatorio-data-inicio').value;
+            const dataFim = document.getElementById('relatorio-data-fim').value;
+            const profissionalId = document.getElementById('relatorio-profissional').value;
+            
+            // Filtrar cirurgias pelo período
+            let cirurgiasFiltradas = cirurgias.filter(c => 
+                c.data >= dataInicio && c.data <= dataFim
+            );
+            
+            // Se for relatório por profissional, filtrar pelo profissional selecionado
+            if (tipoRelatorio === 'profissional' && profissionalId) {
+                cirurgiasFiltradas = cirurgiasFiltradas.filter(c => 
+                    c.cirurgiao == profissionalId || 
+                    c.primeiroAuxiliar == profissionalId || 
+                    c.segundoAuxiliar == profissionalId
+                );
+            }
+            
+            const previewContainer = document.getElementById('relatorio-preview');
+            previewContainer.innerHTML = '';
+            
+            // Verificar se existem cirurgias no período
+            if (cirurgiasFiltradas.length === 0) {
+                previewContainer.innerHTML = '<p>Nenhuma cirurgia encontrada no período selecionado.</p>';
+                return;
+            }
+            
+            // Agrupar cirurgias por data se for relatório diário
+            if (tipoRelatorio === 'diario') {
+                // Agrupar por data
+                const cirurgiasPorData = {};
+                cirurgiasFiltradas.forEach(cirurgia => {
+                    if (!cirurgiasPorData[cirurgia.data]) {
+                        cirurgiasPorData[cirurgia.data] = [];
+                    }
+                    cirurgiasPorData[cirurgia.data].push(cirurgia);
+                });
+                
+                // Criar relatório para cada data
+                Object.keys(cirurgiasPorData).sort().forEach(data => {
+                    const dataParts = data.split('-');
+                    const dataFormatada = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+                    
+                    const relatorioDiv = document.createElement('div');
+                    relatorioDiv.className = 'relatorio-diario';
+                    relatorioDiv.innerHTML = `
+                        <h3>Relatório de Cirurgias - ${dataFormatada}</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Procedimento</th>
+                                    <th>Cirurgião</th>
+                                    <th>1º Auxiliar</th>
+                                    <th>2º Auxiliar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${cirurgiasPorData[data].map(cirurgia => `
+                                    <tr>
+                                        <td>${cirurgia.paciente}</td>
+                                        <td>${buscarNomeProfissional(cirurgia.cirurgiao)}</td>
+                                        <td>${buscarNomeProfissional(cirurgia.primeiroAuxiliar)}</td>
+                                        <td>${buscarNomeProfissional(cirurgia.segundoAuxiliar)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    previewContainer.appendChild(relatorioDiv);
+                });
+            }
+            // Relatório mensal (listagem completa)
+            else if (tipoRelatorio === 'mensal') {
+                // Ordenar por data
+                cirurgiasFiltradas.sort((a, b) => new Date(a.data) - new Date(b.data));
+                
+                const dataInicioFormatada = formatarDataBR(dataInicio);
+                const dataFimFormatada = formatarDataBR(dataFim);
+                
+                const relatorioDiv = document.createElement('div');
+                relatorioDiv.className = 'relatorio-mensal';
+                relatorioDiv.innerHTML = `
+                    <h3>Relatório Mensal de Cirurgias - ${dataInicioFormatada} a ${dataFimFormatada}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Paciente</th>
+                                <th>Cirurgião</th>
+                                <th>1º Auxiliar</th>
+                                <th>2º Auxiliar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cirurgiasFiltradas.map(cirurgia => `
+                                <tr>
+                                    <td>${formatarDataBR(cirurgia.data)}</td>
+                                    <td>${cirurgia.paciente}</td>
+                                    <td>${cirurgia.procedimento}</td>
+                                    <td>${buscarNomeProfissional(cirurgia.cirurgiao)}</td>
+                                    <td>${buscarNomeProfissional(cirurgia.primeiroAuxiliar)}</td>
+                                    <td>${buscarNomeProfissional(cirurgia.segundoAuxiliar)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <h3>Resumo por Profissional</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Profissional</th>
+                                <th>Como Principal</th>
+                                <th>Como 1º Auxiliar</th>
+                                <th>Como 2º Auxiliar</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${profissionais.map(profissional => {
+                                const comoPrincipal = cirurgiasFiltradas.filter(c => c.cirurgiao == profissional.id).length;
+                                const comoPrimeiroAuxiliar = cirurgiasFiltradas.filter(c => c.primeiroAuxiliar == profissional.id).length;
+                                const comoSegundoAuxiliar = cirurgiasFiltradas.filter(c => c.segundoAuxiliar == profissional.id).length;
+                                const total = comoPrincipal + comoPrimeiroAuxiliar + comoSegundoAuxiliar;
+                                
+                                return total > 0 ? `
+                                    <tr>
+                                        <td>${profissional.nome}</td>
+                                        <td align="center">${comoPrincipal}</td>
+                                        <td align="center">${comoPrimeiroAuxiliar}</td>
+                                        <td align="center">${comoSegundoAuxiliar}</td>
+                                        <td align="center">${total}</td>
+                                    </tr>
+                                ` : '';
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                previewContainer.appendChild(relatorioDiv);
+            }
+            // Relatório por profissional
+            else if (tipoRelatorio === 'profissional') {
+                // Ordenar por data
+                cirurgiasFiltradas.sort((a, b) => new Date(a.data) - new Date(b.data));
+                
+                const dataInicioFormatada = formatarDataBR(dataInicio);
+                const dataFimFormatada = formatarDataBR(dataFim);
+                
+                let tituloProfissional = 'Todos os Profissionais';
+                if (profissionalId) {
+                    const profissional = profissionais.find(p => p.id == profissionalId);
+                    if (profissional) {
+                        tituloProfissional = profissional.nome;
+                    }
+                }
+                
+                const relatorioDiv = document.createElement('div');
+                relatorioDiv.className = 'relatorio-profissional';
+                relatorioDiv.innerHTML = `
+                    <h3>Relatório de Cirurgias por Profissional</h3>
+                    <p><strong>Profissional:</strong> ${tituloProfissional}</p>
+                    <p><strong>Período:</strong> ${dataInicioFormatada} a ${dataFimFormatada}</p>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Paciente</th>
+                                <th>Procedimento</th>
+                                <th>Função</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cirurgiasFiltradas.map(cirurgia => {
+                                let funcao = '';
+                                if (profissionalId) {
+                                    if (cirurgia.cirurgiao == profissionalId) funcao = 'Cirurgião Principal';
+                                    else if (cirurgia.primeiroAuxiliar == profissionalId) funcao = '1º Auxiliar';
+                                    else if (cirurgia.segundoAuxiliar == profissionalId) funcao = '2º Auxiliar';
+                                }
+                                
+                                return `
+                                    <tr>
+                                        <td>${formatarDataBR(cirurgia.data)}</td>
+                                        <td>${cirurgia.paciente}</td>
+                                        <td>${cirurgia.procedimento}</td>
+                                        <td>${funcao}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <h3>Resumo</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${profissionalId ? `
+                                <tr>
+                                    <td>Cirurgião Principal</td>
+                                    <td align="center">${cirurgiasFiltradas.filter(c => c.cirurgiao == profissionalId).length}</td>
+                                </tr>
+                                <tr>
+                                    <td>1º Auxiliar</td>
+                                    <td align="center">${cirurgiasFiltradas.filter(c => c.primeiroAuxiliar == profissionalId).length}</td>
+                                </tr>
+                                <tr>
+                                    <td>2º Auxiliar</td>
+                                    <td align="center">${cirurgiasFiltradas.filter(c => c.segundoAuxiliar == profissionalId).length}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total</strong></td>
+                                    <td align="center"><strong>${cirurgiasFiltradas.length}</strong></td>
+                                </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
+                `;
+                
+                previewContainer.appendChild(relatorioDiv);
+            }
+        }
+        
+        // Função para imprimir o relatório
+        function imprimirRelatorio() {
+            const tipoRelatorio = document.getElementById('relatorio-tipo').value;
+            const conteudo = document.getElementById('relatorio-preview').innerHTML;
+            
+            if (!conteudo || conteudo.trim() === '') {
+                alert('Gere um relatório antes de imprimir.');
+                return;
+            }
+            
+            const printContainer = document.getElementById('print-container');
+            printContainer.innerHTML = `
+                <div class="print-header">
+                    <img src="/api/placeholder/200/60" alt="Hospital Metropolitano" style="max-width: 200px; margin-bottom: 10px;">
+                    <h2>Hospital Metropolitano</h2>
+                    <h3>Sistema de Controle de Cirurgias</h3>
+                </div>
+                ${conteudo}
+            `;
+            
+            window.print();
+        }
+        
+        // Função para formatar data no padrão brasileiro
+        function formatarDataBR(dataISO) {
+            if (!dataISO) return '';
+            const dataParts = dataISO.split('-');
+            return `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+        }
+        
+        // Função para configurar as abas
+        function configurarTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remover classe active de todas as abas
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Adicionar classe active na aba clicada
+                    tab.classList.add('active');
+                    
+                    // Mostrar o conteúdo correspondente
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Mostrar/esconder o campo de profissional no relatório
+            document.getElementById('relatorio-tipo').addEventListener('change', function() {
+                const mostrarProfissional = this.value === 'profissional';
+                document.getElementById('relatorio-profissional-container').style.display = mostrarProfissional ? 'block' : 'none';
+            });
+        }
+        
+        // Função para configurar todos os event listeners
+        function configurarEventListeners() {
+            // Form de cadastro de cirurgia
+            document.getElementById('cirurgia-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const data = document.getElementById('data').value;
+                const paciente = document.getElementById('paciente').value;
+                const cirurgiao = document.getElementById('cirurgiao').value;
+                const primeiroAuxiliar = document.getElementById('primeiro-auxiliar').value;
+                const segundoAuxiliar = document.getElementById('segundo-auxiliar').value;
+                
+                if (!data || !paciente || !cirurgiao || !primeiroAuxiliar || !segundoAuxiliar) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return;
+                }
+                
+                                    // Criar novo objeto de cirurgia
+                const novaCirurgia = {
+                    id: Date.now(), // Usar timestamp como ID
+                    data,
+                    paciente,
+                    procedimento: "Gastroplastia", // Todos os procedimentos são Gastroplastia
+                    cirurgiao,
+                    primeiroAuxiliar,
+                    segundoAuxiliar
+                };
+                
+                // Adicionar à lista
+                cirurgias.push(novaCirurgia);
+                
+                // Salvar e atualizar
+                salvarLocalStorage();
+                this.reset();
+                document.getElementById('data').value = new Date().toISOString().split('T')[0]; // Definir a data como hoje
+                atualizarTabelaCirurgias();
+                atualizarDashboard();
+                atualizarTabelaProfissionais();
+                
+                alert('Cirurgia registrada com sucesso!');
+            });
+            
+            // Form de edição de cirurgia
+            document.getElementById('form-editar-cirurgia').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const id = parseInt(document.getElementById('editar-id').value);
+                const data = document.getElementById('editar-data').value;
+                const paciente = document.getElementById('editar-paciente').value;
+                const cirurgiao = document.getElementById('editar-cirurgiao').value;
+                const primeiroAuxiliar = document.getElementById('editar-primeiro-auxiliar').value;
+                const segundoAuxiliar = document.getElementById('editar-segundo-auxiliar').value;
+                
+                if (!data || !paciente || !cirurgiao || !primeiroAuxiliar || !segundoAuxiliar) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return;
+                }
+                
+                // Atualizar cirurgia
+                const index = cirurgias.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    cirurgias[index] = {
+                        id,
+                        data,
+                        paciente,
+                        procedimento: "Gastroplastia", // Todos os procedimentos são Gastroplastia
+                        cirurgiao,
+                        primeiroAuxiliar,
+                        segundoAuxiliar
+                    };
+                    
+                    // Salvar e atualizar
+                    salvarLocalStorage();
+                    atualizarTabelaCirurgias();
+                    atualizarDashboard();
+                    atualizarTabelaProfissionais();
+                    fecharModalEditar();
+                    
+                    alert('Cirurgia atualizada com sucesso!');
+                }
+            });
+            
+            // Form de cadastro de profissional
+            document.getElementById('profissional-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const nome = document.getElementById('nome-profissional').value;
+                
+                if (!nome) {
+                    alert('Por favor, preencha o nome do profissional.');
+                    return;
+                }
+                
+                // Se estiver editando, atualiza o profissional existente
+                if (profissionalEditandoId) {
+                    const index = profissionais.findIndex(p => p.id === profissionalEditandoId);
+                    if (index !== -1) {
+                        profissionais[index] = {
+                            id: profissionalEditandoId,
+                            nome
+                        };
+                        
+                        alert('Profissional atualizado com sucesso!');
+                    }
+                } 
+                // Senão, adiciona um novo profissional
+                else {
+                    const novoProfissional = {
+                        id: Date.now(), // Usar timestamp como ID
+                        nome
+                    };
+                    
+                    profissionais.push(novoProfissional);
+                    alert('Profissional adicionado com sucesso!');
+                }
+                
+                // Salvar e atualizar
+                salvarLocalStorage();
+                this.reset();
+                preencherSelects();
+                atualizarTabelaProfissionais();
+                cancelarEdicaoProfissional();
+            });
+            
+            // Botão para adicionar profissional a partir da tela de registro
+            document.getElementById('add-profissional').addEventListener('click', function() {
+                // Mudar para a aba de profissionais
+                document.querySelector('.tab[data-tab="profissionais"]').click();
+            });
+            
+            // Botão para cancelar edição de profissional
+            document.getElementById('btn-cancelar-edicao').addEventListener('click', function() {
+                cancelarEdicaoProfissional();
+            });
+            
+            // Botão de filtrar cirurgias
+            document.getElementById('btn-filtrar').addEventListener('click', function() {
+                paginaAtual = 1; // Voltar para a primeira página
+                atualizarTabelaCirurgias();
+            });
+            
+            // Botão de limpar filtros
+            document.getElementById('btn-limpar-filtro').addEventListener('click', function() {
+                document.getElementById('filtro-data-inicio').value = '';
+                document.getElementById('filtro-data-fim').value = '';
+                document.getElementById('filtro-profissional').value = '';
+                paginaAtual = 1; // Voltar para a primeira página
+                atualizarTabelaCirurgias();
+            });
+            
+            // Botão para gerar relatório
+            document.getElementById('btn-gerar-relatorio').addEventListener('click', function() {
+                gerarRelatorio();
+            });
+            
+            // Botão para imprimir relatório
+            document.getElementById('btn-imprimir-relatorio').addEventListener('click', function() {
+                imprimirRelatorio();
+            });
+            
+            // Botão para fechar o modal
+            document.getElementById('btn-fechar-modal').addEventListener('click', function() {
+                fecharModalEditar();
+            });
+        }
+    </script>
+</body>
+</html>
