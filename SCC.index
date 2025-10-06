@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Cirurgias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🏥</div>
+                <h1 class="text-3xl font-bold text-blue-600">Sistema de Cirurgias</h1>
+                <p class="text-gray-600 mt-2">Acesso Restrito</p>
+            </div>
+            
+            <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center"></div>
+            
+            <form id="loginForm" onsubmit="return doLogin();" class="space-y-5">
+                <div>
+                    <label class="block text-gray-700 mb-2 font-medium">Usuário</label>
+                    <input type="text" id="loginUser" required autofocus
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2 font-medium">Senha</label>
+                    <input type="password" id="loginPassword" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg">
+                </div>
+                <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium text-lg">
+                    🔓 Acessar Sistema
+                </button>
+            </form>
+
+            <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p class="text-xs text-gray-600 text-center">
+                    🔒 Sistema protegido - Acesso autorizado apenas
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold">🏥 Sistema de Controle de Cirurgias</h1>
+                <button onclick="doLogout()" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition">
+                    🚪 Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white shadow-md">
+            <div class="container mx-auto px-4">
+                <div class="flex space-x-1">
+                    <button onclick="showTab('lancamento')" 
+                        class="tab-btn px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600">
+                        📝 Lançamento
+                    </button>
+                    <button onclick="showTab('dashboard')" 
+                        class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
+                        📊 Dashboard
+                    </button>
+                    <button onclick="showTab('setup')" 
+                        class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
+                        ⚙️ Configuração
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="container mx-auto px-4 py-8">
+            
+            <!-- Aba Lançamento -->
+            <div id="lancamentoTab" class="tab-content">
+                <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Nova Cirurgia</h2>
+                    <form id="cirurgiaForm" class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Nome do Paciente *</label>
+                            <input type="text" id="nomePaciente" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Data da Cirurgia *</label>
+                            <input type="date" id="dataCirurgia" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Cirurgião Principal *</label>
+                            <select id="cirurgiaoSelect" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Selecione um cirurgião</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">1º Auxiliar</label>
+                            <select id="auxiliar1Select" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Selecione um cirurgião</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">2º Auxiliar</label>
+                            <select id="auxiliar2Select" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Selecione um cirurgião</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Observações</label>
+                            <textarea id="observacoes" rows="3" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="submit" 
+                            class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium">
+                            ✅ Salvar Cirurgia
+                        </button>
+                    </form>
+                    <div id="formMessage" class="mt-4"></div>
+                </div>
+            </div>
+
+            <!-- Aba Dashboard -->
+            <div id="dashboardTab" class="tab-content hidden">
+                <!-- Filtros -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Filtros</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <button onclick="filterByPeriod('today')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            📅 Hoje
+                        </button>
+                        <button onclick="filterByPeriod('month')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            📆 Este Mês
+                        </button>
+                        <button onclick="filterByPeriod('year')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            📊 Este Ano
+                        </button>
+                        <button onclick="showCustomDateFilter()" 
+                            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                            🔍 Personalizado
+                        </button>
+                    </div>
+                    <div id="customDateFilter" class="hidden mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="date" id="filterStartDate" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="date" id="filterEndDate" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <button onclick="applyCustomFilter()" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-gray-600 text-sm font-medium">Total de Cirurgias</h3>
+                        <p id="totalCirurgias" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-gray-600 text-sm font-medium">Cirurgias Hoje</h3>
+                        <p id="cirurgiasHoje" class="text-3xl font-bold text-green-600 mt-2">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-gray-600 text-sm font-medium">Cirurgias Este Mês</h3>
+                        <p id="cirurgiasMes" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+                    </div>
+                </div>
+
+                <!-- Estatísticas por Cirurgião -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">📊 Cirurgias por Cirurgião (Filtro Aplicado)</h3>
+                    <div id="cirurgiaoStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Cards serão inseridos aqui -->
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="printDailyReport()" 
+                            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                            🖨️ Imprimir Relatório Diário
+                        </button>
+                        <button onclick="exportCSV()" 
+                            class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+                            📄 Exportar CSV
+                        </button>
+                        <button onclick="exportPDF()" 
+                            class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                            📕 Exportar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Cirurgias -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Lista de Cirurgias</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-gray-700">Data</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">Paciente</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">Cirurgião Principal</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">1º Auxiliar</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">2º Auxiliar</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">Observações</th>
+                                    <th class="px-4 py-2 text-left text-gray-700">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cirurgiasTableBody">
+                                <!-- Dados serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba Setup -->
+            <div id="setupTab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Cadastro de Cirurgiões -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastrar Cirurgião</h2>
+                        <form id="cirurgiaoForm" class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Nome do Cirurgião *</label>
+                                <input type="text" id="nomeCirurgiao" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                                Adicionar Cirurgião
+                            </button>
+                        </form>
+                        <div id="cirurgiaoMessage" class="mt-4"></div>
+                        
+                        <!-- Lista de Cirurgiões -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-bold mb-3 text-gray-800">Cirurgiões Cadastrados</h3>
+                            <ul id="cirurgioesList" class="space-y-2">
+                                <!-- Lista será preenchida -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Instruções Supabase -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800">📋 Configuração do Supabase</h2>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <h4 class="font-bold text-blue-800 mb-2">🔐 Login do Sistema</h4>
+                                <div class="text-sm text-blue-700 space-y-1">
+                                    <p><strong>Usuário:</strong> IOCI</p>
+                                    <p><strong>Senha:</strong> ioci@123</p>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <h4 class="font-bold text-yellow-800 mb-2">⚠️ Passos para Configurar</h4>
+                                <ol class="text-sm text-yellow-700 list-decimal list-inside space-y-2">
+                                    <li>Criar projeto em <strong>supabase.com</strong></li>
+                                    <li>Executar o SQL abaixo no editor do Supabase</li>
+                                    <li>Copiar URL e chave anon do projeto</li>
+                                    <li>Colar no código (linha ~174)</li>
+                                </ol>
+                            </div>
+
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                <h4 class="font-bold text-gray-800 mb-2">💾 SQL para Criar Tabelas:</h4>
+                                <pre class="text-xs bg-white p-3 rounded overflow-x-auto border">-- Tabela de cirurgiões
+CREATE TABLE cirurgioes (
+  id BIGSERIAL PRIMARY KEY,
+  nome TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE 
+    DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- Tabela de cirurgias
+CREATE TABLE cirurgias (
+  id BIGSERIAL PRIMARY KEY,
+  paciente TEXT NOT NULL,
+  data DATE NOT NULL,
+  cirurgiao_id BIGINT 
+    REFERENCES cirurgioes(id) 
+    ON DELETE SET NULL,
+  auxiliar1_id BIGINT 
+    REFERENCES cirurgioes(id) 
+    ON DELETE SET NULL,
+  auxiliar2_id BIGINT 
+    REFERENCES cirurgioes(id) 
+    ON DELETE SET NULL,
+  observacoes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE 
+    DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- Habilitar RLS
+ALTER TABLE cirurgioes 
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cirurgias 
+  ENABLE ROW LEVEL SECURITY;
+
+-- Políticas (acesso público)
+CREATE POLICY "Permitir tudo" 
+  ON cirurgioes FOR ALL 
+  USING (true) WITH CHECK (true);
+
+CREATE POLICY "Permitir tudo" 
+  ON cirurgias FOR ALL 
+  USING (true) WITH CHECK (true);</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Print Area (hidden) -->
+    <div id="printArea" class="hidden"></div>
+
+    <script>
+        // ==========================================
+        // CONFIGURAÇÃO DO SUPABASE
+        // ==========================================
+        const SUPABASE_URL = 'https://knylwzxpatuhaegxddak.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtueWx3enhwYXR1aGFlZ3hkZGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTQ1MzAsImV4cCI6MjA3NTI3MDUzMH0.VyExUmy-7BYzsp1Cwv22WZwruT5vJYEhmL5_SnLz7Pk';
+        
+        let supabase = null;
+        
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (error) {
+            console.warn('Supabase não configurado. Configure depois na aba Configuração.');
+        }
+
+        // ==========================================
+        // CREDENCIAIS DE LOGIN
+        // ==========================================
+        const VALID_USER = 'IOCI';
+        const VALID_PASSWORD = 'ioci@123';
+
+        // ==========================================
+        // VARIÁVEIS GLOBAIS
+        // ==========================================
+        let allCirurgias = [];
+        let filteredCirurgias = [];
+        let cirurgioes = [];
+        let isLoggedIn = false;
+
+        // ==========================================
+        // AUTENTICAÇÃO SIMPLES
+        // ==========================================
+        
+        function doLogin() {
+            const user = document.getElementById('loginUser').value.trim().toUpperCase();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            console.log('Tentativa de login - Usuário:', user, 'Senha:', password); // Debug
+            console.log('Esperado - Usuário:', VALID_USER, 'Senha:', VALID_PASSWORD); // Debug
+            
+            if (user === VALID_USER && password === VALID_PASSWORD) {
+                console.log('Login bem-sucedido!'); // Debug
+                isLoggedIn = true;
+                sessionStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                initializeApp();
+                return false;
+            } else {
+                console.log('Login falhou!'); // Debug
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = '❌ Usuário ou senha incorretos!';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 3000);
+                return false;
+            }
+        }
+
+        function doLogout() {
+            isLoggedIn = false;
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+        async function initializeApp() {
+            // Mostrar aviso se Supabase não configurado
+            if (!supabase) {
+                alert('⚠️ ATENÇÃO: Supabase ainda não foi configurado!\n\nVocê está no sistema, mas precisa configurar o Supabase para salvar dados.\n\nVá na aba "Configuração" para ver as instruções.');
+            }
+            
+            await loadCirurgioes();
+            await loadCirurgias();
+            updateStats();
+            setTodayDate();
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dataCirurgia').value = today;
+            document.getElementById('filterStartDate').value = today;
+            document.getElementById('filterEndDate').value = today;
+        }
+
+        // ==========================================
+        // NAVEGAÇÃO ENTRE ABAS
+        // ==========================================
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-blue-600');
+                btn.classList.add('text-gray-600', 'border-transparent');
+            });
+            event.target.classList.add('text-blue-600', 'border-blue-600');
+            
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'setup') {
+                loadCirurgioesList();
+            }
+        }
+
+        // ==========================================
+        // CIRURGIÕES
+        // ==========================================
+        async function loadCirurgioes() {
+            if (!supabase) {
+                console.warn('Supabase não configurado');
+                return;
+            }
+            try {
+                const { data, error } = await supabase
+                    .from('cirurgioes')
+                    .select('*')
+                    .order('nome');
+                
+                if (error) throw error;
+                
+                cirurgioes = data || [];
+                updateCirurgiaoSelect();
+            } catch (error) {
+                console.error('Erro ao carregar cirurgiões:', error);
+            }
+        }
+
+        function updateCirurgiaoSelect() {
+            const selects = [
+                document.getElementById('cirurgiaoSelect'),
+                document.getElementById('auxiliar1Select'),
+                document.getElementById('auxiliar2Select')
+            ];
+            
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">Selecione um cirurgião</option>';
+                cirurgioes.forEach(cirurgiao => {
+                    const option = document.createElement('option');
+                    option.value = cirurgiao.id;
+                    option.textContent = cirurgiao.nome;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        document.getElementById('cirurgiaoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('nomeCirurgiao').value.trim();
+            
+            try {
+                const { error } = await supabase
+                    .from('cirurgioes')
+                    .insert([{ nome: nome }]);
+                
+                if (error) throw error;
+                
+                showMessage('cirurgiaoMessage', 'Cirurgião cadastrado com sucesso!', 'success');
+                document.getElementById('nomeCirurgiao').value = '';
+                await loadCirurgioes();
+                loadCirurgioesList();
+            } catch (error) {
+                showMessage('cirurgiaoMessage', 'Erro ao cadastrar: ' + error.message, 'error');
+            }
+        });
+
+        async function loadCirurgioesList() {
+            const list = document.getElementById('cirurgioesList');
+            list.innerHTML = '';
+            
+            if (cirurgioes.length === 0) {
+                list.innerHTML = '<li class="text-gray-500 text-center py-4">Nenhum cirurgião cadastrado</li>';
+                return;
+            }
+            
+            cirurgioes.forEach(cirurgiao => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+                li.innerHTML = `
+                    <span class="text-gray-800">${cirurgiao.nome}</span>
+                    <button onclick="deleteCirurgiao(${cirurgiao.id})" 
+                        class="text-red-600 hover:text-red-800 text-sm">
+                        Excluir
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        async function deleteCirurgiao(id) {
+            if (!confirm('Deseja realmente excluir este cirurgião?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('cirurgioes')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                await loadCirurgioes();
+                loadCirurgioesList();
+            } catch (error) {
+                alert('Erro ao excluir: ' + error.message);
+            }
+        }
+
+        // ==========================================
+        // CIRURGIAS
+        // ==========================================
+        document.getElementById('cirurgiaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const auxiliar1Value = document.getElementById('auxiliar1Select').value;
+            const auxiliar2Value = document.getElementById('auxiliar2Select').value;
+            
+            const cirurgia = {
+                paciente: document.getElementById('nomePaciente').value.trim(),
+                data: document.getElementById('dataCirurgia').value,
+                cirurgiao_id: parseInt(document.getElementById('cirurgiaoSelect').value),
+                auxiliar1_id: auxiliar1Value ? parseInt(auxiliar1Value) : null,
+                auxiliar2_id: auxiliar2Value ? parseInt(auxiliar2Value) : null,
+                observacoes: document.getElementById('observacoes').value.trim()
+            };
+            
+            try {
+                const { error } = await supabase
+                    .from('cirurgias')
+                    .insert([cirurgia]);
+                
+                if (error) throw error;
+                
+                showMessage('formMessage', 'Cirurgia registrada com sucesso!', 'success');
+                document.getElementById('cirurgiaForm').reset();
+                setTodayDate();
+                await loadCirurgias();
+            } catch (error) {
+                showMessage('formMessage', 'Erro ao salvar: ' + error.message, 'error');
+            }
+        });
+
+        async function loadCirurgias() {
+            if (!supabase) {
+                console.warn('Supabase não configurado');
+                return;
+            }
+            try {
+                const { data, error } = await supabase
+                    .from('cirurgias')
+                    .select(`
+                        *,
+                        cirurgiao:cirurgioes!cirurgiao_id(nome),
+                        auxiliar1:cirurgioes!auxiliar1_id(nome),
+                        auxiliar2:cirurgioes!auxiliar2_id(nome)
+                    `)
+                    .order('data', { ascending: false });
+                
+                if (error) throw error;
+                
+                allCirurgias = data || [];
+                filteredCirurgias = allCirurgias;
+                updateDashboard();
+            } catch (error) {
+                console.error('Erro ao carregar cirurgias:', error);
+            }
+        }
+
+        async function deleteCirurgia(id) {
+            if (!confirm('Deseja realmente excluir esta cirurgia?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('cirurgias')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                await loadCirurgias();
+            } catch (error) {
+                alert('Erro ao excluir: ' + error.message);
+            }
+        }
+
+        async function editCirurgia(id) {
+            const cirurgia = allCirurgias.find(c => c.id === id);
+            if (!cirurgia) return;
+
+            const novoPaciente = prompt('Nome do Paciente:', cirurgia.paciente);
+            if (!novoPaciente) return;
+
+            const novaData = prompt('Data (AAAA-MM-DD):', cirurgia.data);
+            if (!novaData) return;
+
+            const novaObs = prompt('Observações:', cirurgia.observacoes || '');
+
+            try {
+                const { error } = await supabase
+                    .from('cirurgias')
+                    .update({
+                        paciente: novoPaciente.trim(),
+                        data: novaData,
+                        observacoes: novaObs ? novaObs.trim() : null
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                await loadCirurgias();
+                alert('Cirurgia atualizada com sucesso!');
+            } catch (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            }
+        }
+
+        // Formatar data para exibição (corrigir fuso horário)
+        function formatDate(dateString) {
+            const date = new Date(dateString + 'T12:00:00');
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // ==========================================
+        // FILTROS
+        // ==========================================
+        function filterByPeriod(period) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            switch(period) {
+                case 'today':
+                    const todayStr = today.toISOString().split('T')[0];
+                    filteredCirurgias = allCirurgias.filter(c => c.data === todayStr);
+                    break;
+                case 'month':
+                    filteredCirurgias = allCirurgias.filter(c => {
+                        const cDate = new Date(c.data + 'T12:00:00');
+                        return cDate.getMonth() === today.getMonth() && 
+                               cDate.getFullYear() === today.getFullYear();
+                    });
+                    break;
+                case 'year':
+                    filteredCirurgias = allCirurgias.filter(c => {
+                        const cDate = new Date(c.data + 'T12:00:00');
+                        return cDate.getFullYear() === today.getFullYear();
+                    });
+                    break;
+            }
+            updateDashboard();
+        }
+
+        function showCustomDateFilter() {
+            document.getElementById('customDateFilter').classList.toggle('hidden');
+        }
+
+        function applyCustomFilter() {
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            
+            filteredCirurgias = allCirurgias.filter(c => {
+                return c.data >= startDate && c.data <= endDate;
+            });
+            updateDashboard();
+        }
+
+        // ==========================================
+        // DASHBOARD
+        // ==========================================
+        function updateStats() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            const todayCount = allCirurgias.filter(c => c.data === todayStr).length;
+            
+            const monthCount = allCirurgias.filter(c => {
+                const cDate = new Date(c.data + 'T12:00:00');
+                return cDate.getMonth() === today.getMonth() && 
+                       cDate.getFullYear() === today.getFullYear();
+            }).length;
+            
+            document.getElementById('totalCirurgias').textContent = allCirurgias.length;
+            document.getElementById('cirurgiasHoje').textContent = todayCount;
+            document.getElementById('cirurgiasMes').textContent = monthCount;
+        }
+
+        function updateDashboard() {
+            updateStats();
+            updateTable();
+            updateCirurgiaoStats();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('cirurgiasTableBody');
+            tbody.innerHTML = '';
+            
+            if (filteredCirurgias.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">Nenhuma cirurgia encontrada</td></tr>';
+                return;
+            }
+            
+            filteredCirurgias.forEach(cirurgia => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-2">${formatDate(cirurgia.data)}</td>
+                    <td class="px-4 py-2">${cirurgia.paciente}</td>
+                    <td class="px-4 py-2">${cirurgia.cirurgiao?.nome || 'N/A'}</td>
+                    <td class="px-4 py-2">${cirurgia.auxiliar1?.nome || '-'}</td>
+                    <td class="px-4 py-2">${cirurgia.auxiliar2?.nome || '-'}</td>
+                    <td class="px-4 py-2">${cirurgia.observacoes || '-'}</td>
+                    <td class="px-4 py-2">
+                        <button onclick="editCirurgia(${cirurgia.id})" 
+                            class="text-blue-600 hover:text-blue-800 mr-3">
+                            Editar
+                        </button>
+                        <button onclick="deleteCirurgia(${cirurgia.id})" 
+                            class="text-red-600 hover:text-red-800">
+                            Excluir
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateCirurgiaoStats() {
+            // Cards de estatísticas por cirurgião
+            const statsContainer = document.getElementById('cirurgiaoStats');
+            const porCirurgiao = {};
+            
+            // Contar cirurgias por cirurgião (incluindo como principal, aux1 e aux2)
+            filteredCirurgias.forEach(c => {
+                // Cirurgião principal
+                if (c.cirurgiao?.nome) {
+                    const nome = c.cirurgiao.nome;
+                    if (!porCirurgiao[nome]) {
+                        porCirurgiao[nome] = { principal: 0, auxiliar: 0, total: 0 };
+                    }
+                    porCirurgiao[nome].principal++;
+                    porCirurgiao[nome].total++;
+                }
+                
+                // 1º Auxiliar
+                if (c.auxiliar1?.nome) {
+                    const nome = c.auxiliar1.nome;
+                    if (!porCirurgiao[nome]) {
+                        porCirurgiao[nome] = { principal: 0, auxiliar: 0, total: 0 };
+                    }
+                    porCirurgiao[nome].auxiliar++;
+                    porCirurgiao[nome].total++;
+                }
+                
+                // 2º Auxiliar
+                if (c.auxiliar2?.nome) {
+                    const nome = c.auxiliar2.nome;
+                    if (!porCirurgiao[nome]) {
+                        porCirurgiao[nome] = { principal: 0, auxiliar: 0, total: 0 };
+                    }
+                    porCirurgiao[nome].auxiliar++;
+                    porCirurgiao[nome].total++;
+                }
+            });
+
+            // Criar cards
+            statsContainer.innerHTML = '';
+            const cores = [
+                'bg-blue-500', 'bg-green-500', 'bg-purple-500', 
+                'bg-orange-500', 'bg-pink-500', 'bg-indigo-500',
+                'bg-teal-500', 'bg-red-500', 'bg-yellow-500'
+            ];
+            
+            let index = 0;
+            for (const [nome, stats] of Object.entries(porCirurgiao).sort((a, b) => b[1].total - a[1].total)) {
+                const cor = cores[index % cores.length];
+                const card = document.createElement('div');
+                card.className = `${cor} text-white rounded-lg p-4 shadow-lg`;
+                card.innerHTML = `
+                    <h4 class="font-bold text-lg mb-2">${nome}</h4>
+                    <div class="text-3xl font-bold mb-2">${stats.total}</div>
+                    <div class="text-sm opacity-90">
+                        <div>Principal: ${stats.principal}</div>
+                        <div>Auxiliar: ${stats.auxiliar}</div>
+                    </div>
+                `;
+                statsContainer.appendChild(card);
+                index++;
+            }
+
+            if (Object.keys(porCirurgiao).length === 0) {
+                statsContainer.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Nenhum dado para exibir</div>';
+            }
+        }
+
+        // ==========================================
+        // EXPORTAÇÃO E IMPRESSÃO
+        // ==========================================
+        function printDailyReport() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const todayFormatted = formatDate(todayStr);
+            
+            const todayCirurgias = allCirurgias.filter(c => c.data === todayStr);
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = `
+                <div style="padding: 20px;">
+                    <h1 style="text-align: center; margin-bottom: 20px;">CENSO DIÁRIO DE CIRURGIAS</h1>
+                    <p style="text-align: center; margin-bottom: 30px;"><strong>Data: ${todayFormatted}</strong></p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid black; padding: 10px;">Paciente</th>
+                                <th style="border: 1px solid black; padding: 10px;">Cirurgião Principal</th>
+                                <th style="border: 1px solid black; padding: 10px;">1º Auxiliar</th>
+                                <th style="border: 1px solid black; padding: 10px;">2º Auxiliar</th>
+                                <th style="border: 1px solid black; padding: 10px;">Observações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${todayCirurgias.length > 0 ? todayCirurgias.map(c => `
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 10px;">${c.paciente}</td>
+                                    <td style="border: 1px solid black; padding: 10px;">${c.cirurgiao?.nome || 'N/A'}</td>
+                                    <td style="border: 1px solid black; padding: 10px;">${c.auxiliar1?.nome || '-'}</td>
+                                    <td style="border: 1px solid black; padding: 10px;">${c.auxiliar2?.nome || '-'}</td>
+                                    <td style="border: 1px solid black; padding: 10px;">${c.observacoes || '-'}</td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="5" style="border: 1px solid black; padding: 10px; text-align: center;">Nenhuma cirurgia registrada hoje</td></tr>'}
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 30px;">Total: ${todayCirurgias.length} cirurgia(s)</p>
+                </div>
+            `;
+            
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        }
+
+        function exportCSV() {
+            if (filteredCirurgias.length === 0) {
+                alert('Não há dados para exportar!');
+                return;
+            }
+
+            const csvContent = [
+                ['Data', 'Paciente', 'Cirurgião Principal', '1º Auxiliar', '2º Auxiliar', 'Observações'],
+                ...filteredCirurgias.map(c => [
+                    formatDate(c.data),
+                    c.paciente,
+                    c.cirurgiao?.nome || 'N/A',
+                    c.auxiliar1?.nome || '-',
+                    c.auxiliar2?.nome || '-',
+                    c.observacoes || ''
+                ])
+            ].map(row => row.join(';')).join('\n');
+            
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `cirurgias_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportPDF() {
+            if (filteredCirurgias.length === 0) {
+                alert('Não há dados para exportar!');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            doc.setFontSize(16);
+            doc.text('Relatório de Cirurgias', 148, 15, { align: 'center' });
+            
+            const tableData = filteredCirurgias.map(c => [
+                formatDate(c.data),
+                c.paciente,
+                c.cirurgiao?.nome || 'N/A',
+                c.auxiliar1?.nome || '-',
+                c.auxiliar2?.nome || '-',
+                c.observacoes || '-'
+            ]);
+            
+            doc.autoTable({
+                head: [['Data', 'Paciente', 'Cirurgião Principal', '1º Auxiliar', '2º Auxiliar', 'Observações']],
+                body: tableData,
+                startY: 25,
+                styles: { fontSize: 8 }
+            });
+            
+            doc.save(`cirurgias_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ==========================================
+        // UTILITÁRIOS
+        // ==========================================
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.className = type === 'success' 
+                ? 'p-4 bg-green-100 text-green-700 rounded-lg' 
+                : 'p-4 bg-red-100 text-red-700 rounded-lg';
+            element.textContent = message;
+            setTimeout(() => {
+                element.textContent = '';
+                element.className = '';
+            }, 5000);
+        }
+
+        // ==========================================
+        // INICIALIZAÇÃO NA CARGA DA PÁGINA
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Página carregada!'); // Debug
+            // Verificar se já está logado
+            const loggedIn = sessionStorage.getItem('isLoggedIn');
+            console.log('Status de login:', loggedIn); // Debug
+            if (loggedIn === 'true') {
+                isLoggedIn = true;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                initializeApp();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
