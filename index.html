@@ -10,18 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printArea, #printArea * {
-                visibility: visible;
-            }
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
         }
     </style>
 </head>
@@ -49,263 +40,124 @@
                     <input type="password" id="loginPassword" required
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg">
                 </div>
-                <button type="submit" 
+                <button type="submit"
                     class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium text-lg">
                     🔓 Acessar Sistema
                 </button>
             </form>
 
             <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <p class="text-xs text-gray-600 text-center">
-                    🔒 Sistema protegido - Acesso autorizado apenas
-                </p>
+                <p class="text-xs text-gray-600 text-center">🔒 Sistema protegido - Acesso autorizado apenas</p>
             </div>
         </div>
     </div>
 
     <!-- Main App -->
     <div id="mainApp" class="hidden">
-        <!-- Header -->
         <header class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold">🏥 Sistema de Controle de Cirurgias</h1>
-                <button onclick="doLogout()" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition">
-                    🚪 Sair
-                </button>
+                <button onclick="doLogout()" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition">🚪 Sair</button>
             </div>
         </header>
 
-        <!-- Navigation Tabs -->
         <nav class="bg-white shadow-md">
             <div class="container mx-auto px-4">
                 <div class="flex space-x-1">
-                    <button onclick="showTab('lancamento')" 
-                        class="tab-btn px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600">
-                        📝 Lançamento
-                    </button>
-                    <button onclick="showTab('dashboard')" 
-                        class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
-                        📊 Dashboard
-                    </button>
-                    <button onclick="showTab('setup')" 
-                        class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">
-                        ⚙️ Configuração
-                    </button>
+                    <button onclick="showTab('lancamento')" class="tab-btn px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600">📝 Lançamento</button>
+                    <button onclick="showTab('dashboard')" class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">📊 Dashboard</button>
+                    <button onclick="showTab('setup')" class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">⚙️ Configuração</button>
                 </div>
             </div>
         </nav>
 
-        <!-- Tab Content -->
         <main class="container mx-auto px-4 py-8">
-            
-            <!-- Aba Lançamento -->
             <div id="lancamentoTab" class="tab-content">
                 <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
                     <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Nova Cirurgia</h2>
                     <form id="cirurgiaForm" class="space-y-4">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">Nome do Paciente *</label>
-                            <input type="text" id="nomePaciente" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">Data da Cirurgia *</label>
-                            <input type="date" id="dataCirurgia" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">Cirurgião Principal *</label>
-                            <select id="cirurgiaoSelect" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione um cirurgião</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">1º Auxiliar</label>
-                            <select id="auxiliar1Select" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione um cirurgião</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">2º Auxiliar</label>
-                            <select id="auxiliar2Select" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Selecione um cirurgião</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">Observações</label>
-                            <textarea id="observacoes" rows="3" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                        </div>
-                        <button type="submit" 
-                            class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium">
-                            ✅ Salvar Cirurgia
-                        </button>
+                        <div><label class="block text-gray-700 font-medium mb-2">Nome do Paciente *</label><input type="text" id="nomePaciente" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Data da Cirurgia *</label><input type="date" id="dataCirurgia" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Cirurgião Principal *</label><select id="cirurgiaoSelect" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Selecione um cirurgião</option></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">1º Auxiliar</label><select id="auxiliar1Select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Selecione um cirurgião</option></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">2º Auxiliar</label><select id="auxiliar2Select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Selecione um cirurgião</option></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Observações</label><textarea id="observacoes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea></div>
+                        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium">✅ Salvar Cirurgia</button>
                     </form>
                     <div id="formMessage" class="mt-4"></div>
                 </div>
             </div>
 
-            <!-- Aba Dashboard -->
             <div id="dashboardTab" class="tab-content hidden">
-                <!-- Filtros -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-bold mb-4 text-gray-800">Filtros</h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <button onclick="filterByPeriod('today')" 
-                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            📅 Hoje
-                        </button>
-                        <button onclick="filterByPeriod('month')" 
-                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            📆 Este Mês
-                        </button>
-                        <button onclick="filterByPeriod('year')" 
-                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            📊 Este Ano
-                        </button>
-                        <button onclick="showCustomDateFilter()" 
-                            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
-                            🔍 Personalizado
-                        </button>
+                        <button onclick="filterByPeriod('today')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📅 Hoje</button>
+                        <button onclick="filterByPeriod('month')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📆 Este Mês</button>
+                        <button onclick="filterByPeriod('year')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📊 Este Ano</button>
+                        <button onclick="showCustomDateFilter()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">🔍 Personalizado</button>
                     </div>
                     <div id="customDateFilter" class="hidden mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <input type="date" id="filterStartDate" class="px-4 py-2 border border-gray-300 rounded-lg">
                         <input type="date" id="filterEndDate" class="px-4 py-2 border border-gray-300 rounded-lg">
-                        <button onclick="applyCustomFilter()" 
-                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
-                            Aplicar
-                        </button>
+                        <button onclick="applyCustomFilter()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">Aplicar</button>
                     </div>
                 </div>
 
-                <!-- Estatísticas -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-gray-600 text-sm font-medium">Total de Cirurgias</h3>
-                        <p id="totalCirurgias" class="text-3xl font-bold text-blue-600 mt-2">0</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-gray-600 text-sm font-medium">Cirurgias Hoje</h3>
-                        <p id="cirurgiasHoje" class="text-3xl font-bold text-green-600 mt-2">0</p>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-gray-600 text-sm font-medium">Cirurgias Este Mês</h3>
-                        <p id="cirurgiasMes" class="text-3xl font-bold text-purple-600 mt-2">0</p>
-                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Total de Cirurgias</h3><p id="totalCirurgias" class="text-3xl font-bold text-blue-600 mt-2">0</p></div>
+                    <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Cirurgias Hoje</h3><p id="cirurgiasHoje" class="text-3xl font-bold text-green-600 mt-2">0</p></div>
+                    <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Cirurgias Este Mês</h3><p id="cirurgiasMes" class="text-3xl font-bold text-purple-600 mt-2">0</p></div>
                 </div>
 
-                <!-- Estatísticas por Cirurgião -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-bold mb-4 text-gray-800">📊 Cirurgias por Cirurgião (Filtro Aplicado)</h3>
-                    <div id="cirurgiaoStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Cards serão inseridos aqui -->
-                    </div>
+                    <div id="cirurgiaoStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
-                <!-- Botões de Ação -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div class="flex flex-wrap gap-4">
-                        <button onclick="printDailyReport()" 
-                            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
-                            🖨️ Imprimir Relatório Diário
-                        </button>
-                        <button onclick="exportCSV()" 
-                            class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
-                            📄 Exportar CSV
-                        </button>
-                        <button onclick="exportPDF()" 
-                            class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
-                            📕 Exportar PDF
-                        </button>
+                        <button onclick="printDailyReport()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">🖨️ Imprimir Relatório Diário</button>
+                        <button onclick="exportCSV()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">📄 Exportar CSV</button>
+                        <button onclick="exportPDF()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">📕 Exportar PDF</button>
                     </div>
                 </div>
 
-                <!-- Tabela de Cirurgias -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-xl font-bold mb-4 text-gray-800">Lista de Cirurgias</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-gray-700">Data</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">Paciente</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">Cirurgião Principal</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">1º Auxiliar</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">2º Auxiliar</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">Observações</th>
-                                    <th class="px-4 py-2 text-left text-gray-700">Ações</th>
-                                </tr>
+                                <tr><th class="px-4 py-2 text-left text-gray-700">Data</th><th class="px-4 py-2 text-left text-gray-700">Paciente</th><th class="px-4 py-2 text-left text-gray-700">Cirurgião Principal</th><th class="px-4 py-2 text-left text-gray-700">1º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">2º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">Observações</th><th class="px-4 py-2 text-left text-gray-700">Ações</th></tr>
                             </thead>
-                            <tbody id="cirurgiasTableBody">
-                                <!-- Dados serão inseridos aqui -->
-                            </tbody>
+                            <tbody id="cirurgiasTableBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Aba Setup -->
             <div id="setupTab" class="tab-content hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Cadastro de Cirurgiões -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastrar Cirurgião</h2>
                         <form id="cirurgiaoForm" class="space-y-4">
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-2">Nome do Cirurgião *</label>
-                                <input type="text" id="nomeCirurgiao" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-                                Adicionar Cirurgião
-                            </button>
+                            <div><label class="block text-gray-700 font-medium mb-2">Nome do Cirurgião *</label><input type="text" id="nomeCirurgiao" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Adicionar Cirurgião</button>
                         </form>
                         <div id="cirurgiaoMessage" class="mt-4"></div>
-                        
-                        <!-- Lista de Cirurgiões -->
-                        <div class="mt-6">
-                            <h3 class="text-lg font-bold mb-3 text-gray-800">Cirurgiões Cadastrados</h3>
-                            <ul id="cirurgioesList" class="space-y-2">
-                                <!-- Lista será preenchida -->
-                            </ul>
-                        </div>
+                        <div class="mt-6"><h3 class="text-lg font-bold mb-3 text-gray-800">Cirurgiões Cadastrados</h3><ul id="cirurgioesList" class="space-y-2"></ul></div>
                     </div>
 
-                    <!-- Instruções Supabase -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h2 class="text-2xl font-bold mb-6 text-gray-800">📋 Configuração do Supabase</h2>
-                        
                         <div class="space-y-4">
-                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <h4 class="font-bold text-blue-800 mb-2">🔐 Login do Sistema</h4>
-                                <div class="text-sm text-blue-700 space-y-1">
-                                    <p><strong>Usuário:</strong> IOCI</p>
-                                    <p><strong>Senha:</strong> ioci@123</p>
-                                </div>
-                            </div>
-
-                            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <h4 class="font-bold text-yellow-800 mb-2">⚠️ Passos para Configurar</h4>
-                                <ol class="text-sm text-yellow-700 list-decimal list-inside space-y-2">
-                                    <li>Criar projeto em <strong>supabase.com</strong></li>
-                                    <li>Executar o SQL abaixo no editor do Supabase</li>
-                                    <li>Copiar URL e chave anon do projeto</li>
-                                    <li>Colar no código (linha ~174)</li>
-                                </ol>
-                            </div>
-
-                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                                <h4 class="font-bold text-gray-800 mb-2">💾 SQL para Criar Tabelas:</h4>
-                                <pre class="text-xs bg-white p-3 rounded overflow-x-auto border">-- Tabela de cirurgiões
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg"><h4 class="font-bold text-blue-800 mb-2">🔐 Login do Sistema</h4><div class="text-sm text-blue-700 space-y-1"><p><strong>Usuário:</strong> IOCI</p><p><strong>Senha:</strong> ioci@123</p></div></div>
+                            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg"><h4 class="font-bold text-yellow-800 mb-2">⚠️ Passos para Configurar</h4><ol class="text-sm text-yellow-700 list-decimal list-inside space-y-2"><li>Criar projeto em <strong>supabase.com</strong></li><li>Executar o SQL abaixo no editor do Supabase</li><li>Copiar URL e chave anon do projeto</li><li>Colar no código (linha ~174)</li></ol></div>
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">💾 SQL para Criar Tabelas:</h4><pre class="text-xs bg-white p-3 rounded overflow-x-auto border">-- Tabela de cirurgiões
 CREATE TABLE cirurgioes (
   id BIGSERIAL PRIMARY KEY,
   nome TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE 
-    DEFAULT TIMEZONE('utc', NOW())
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
 -- Tabela de cirurgias
@@ -313,34 +165,20 @@ CREATE TABLE cirurgias (
   id BIGSERIAL PRIMARY KEY,
   paciente TEXT NOT NULL,
   data DATE NOT NULL,
-  cirurgiao_id BIGINT 
-    REFERENCES cirurgioes(id) 
-    ON DELETE SET NULL,
-  auxiliar1_id BIGINT 
-    REFERENCES cirurgioes(id) 
-    ON DELETE SET NULL,
-  auxiliar2_id BIGINT 
-    REFERENCES cirurgioes(id) 
-    ON DELETE SET NULL,
+  cirurgiao_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
+  auxiliar1_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
+  auxiliar2_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
   observacoes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE 
-    DEFAULT TIMEZONE('utc', NOW())
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
 -- Habilitar RLS
-ALTER TABLE cirurgioes 
-  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cirurgias 
-  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cirurgioes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cirurgias ENABLE ROW LEVEL SECURITY;
 
 -- Políticas (acesso público)
-CREATE POLICY "Permitir tudo" 
-  ON cirurgioes FOR ALL 
-  USING (true) WITH CHECK (true);
-
-CREATE POLICY "Permitir tudo" 
-  ON cirurgias FOR ALL 
-  USING (true) WITH CHECK (true);</pre>
+CREATE POLICY "Permitir tudo" ON cirurgioes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true);</pre>
                             </div>
                         </div>
                     </div>
@@ -349,44 +187,217 @@ CREATE POLICY "Permitir tudo"
         </main>
     </div>
 
-    <!-- Print Area (hidden) -->
     <div id="printArea" class="hidden"></div>
 
     <script>
-        // ==========================================
-        // CONFIGURAÇÃO DO SUPABASE
-        // ==========================================
-        const SUPABASE_URL = 'https://knylwzxpatuhaegxddak.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtueWx3enhwYXR1aGFlZ3hkZGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTQ1MzAsImV4cCI6MjA3NTI3MDUzMH0.VyExUmy-7BYzsp1Cwv22WZwruT5vJYEhmL5_SnLz7Pk';
+        const SUPABASE_URL='https://knylwzxpatuhaegxddak.supabase.co';
+        const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtueWx3enhwYXR1aGFlZ3hkZGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTQ1MzAsImV4cCI6MjA3NTI3MDUzMH0.VyExUmy-7BYzsp1Cwv22WZwruT5vJYEhmL5_SnLz7Pk';
+        const VALID_USER='IOCI';
+        const VALID_PASSWORD='ioci@123';
         
-        let supabase = null;
-        
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (error) {
-            console.warn('Supabase não configurado. Configure depois na aba Configuração.');
+        let db,allCirurgias=[],filteredCirurgias=[],cirurgioes=[],isLoggedIn=false;
+        try{db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);console.log('✅ Supabase OK');}catch(e){console.error('❌ Supabase error:',e);}
+
+        function handleLogin(e){
+            e.preventDefault();
+            const u=document.getElementById('loginUser').value.trim().toUpperCase();
+            const p=document.getElementById('loginPassword').value.trim();
+            console.log('Login:',u,p);
+            if(u===VALID_USER&&p===VALID_PASSWORD){
+                console.log('✅ Login OK');
+                sessionStorage.setItem('isLoggedIn','true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                isLoggedIn=true;
+                initializeApp();
+            }else{
+                console.log('❌ Login FAIL');
+                const err=document.getElementById('loginError');
+                err.textContent='❌ Usuário ou senha incorretos!';
+                err.classList.remove('hidden');
+                document.getElementById('loginPassword').value='';
+                setTimeout(()=>err.classList.add('hidden'),3000);
+            }
         }
 
-        // ==========================================
-        // CREDENCIAIS DE LOGIN
-        // ==========================================
-        const VALID_USER = 'IOCI';
-        const VALID_PASSWORD = 'ioci@123';
+        function doLogout(){sessionStorage.removeItem('isLoggedIn');location.reload();}
 
-        // ==========================================
-        // VARIÁVEIS GLOBAIS
-        // ==========================================
-        let allCirurgias = [];
-        let filteredCirurgias = [];
-        let cirurgioes = [];
-        let isLoggedIn = false;
+        async function initializeApp(){
+            if(!db)alert('⚠️ Supabase não configurado. Vá na aba Configuração.');
+            await loadCirurgioes();await loadCirurgias();updateStats();setTodayDate();
+        }
 
-        // ==========================================
-        // AUTENTICAÇÃO SIMPLES
-        // ==========================================
-        
-        function doLogin(event) {
-            event.preventDefault(); // Impedir reload da página
-            
-            const user = document.getElementById('loginUser').value.trim().toUpperCase();
-      
+        function setTodayDate(){
+            const t=new Date().toISOString().split('T')[0];
+            document.getElementById('dataCirurgia').value=t;
+            document.getElementById('filterStartDate').value=t;
+            document.getElementById('filterEndDate').value=t;
+        }
+
+        function showTab(n){
+            document.querySelectorAll('.tab-content').forEach(t=>t.classList.add('hidden'));
+            document.getElementById(n+'Tab').classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('text-blue-600','border-blue-600');b.classList.add('text-gray-600','border-transparent');});
+            event.target.classList.add('text-blue-600','border-blue-600');
+            if(n==='dashboard')updateDashboard();else if(n==='setup')loadCirurgioesList();
+        }
+
+        async function loadCirurgioes(){
+            if(!db)return;
+            try{const{data,error}=await db.from('cirurgioes').select('*').order('nome');if(error)throw error;cirurgioes=data||[];updateCirurgiaoSelect();}catch(e){console.error('Erro cirurgiões:',e);}
+        }
+
+        function updateCirurgiaoSelect(){
+            ['cirurgiaoSelect','auxiliar1Select','auxiliar2Select'].forEach(id=>{
+                const s=document.getElementById(id);s.innerHTML='<option value="">Selecione um cirurgião</option>';
+                cirurgioes.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;s.appendChild(o);});
+            });
+        }
+
+        async function loadCirurgioesList(){
+            const l=document.getElementById('cirurgioesList');l.innerHTML='';
+            if(cirurgioes.length===0){l.innerHTML='<li class="text-gray-500 text-center py-4">Nenhum cirurgião cadastrado</li>';return;}
+            cirurgioes.forEach(c=>{
+                const li=document.createElement('li');
+                li.className='flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+                li.innerHTML=`<span>${c.nome}</span><button onclick="deleteCirurgiao(${c.id})" class="text-red-600 hover:text-red-800 text-sm">Excluir</button>`;
+                l.appendChild(li);
+            });
+        }
+
+        async function deleteCirurgiao(id){if(!confirm('Excluir?'))return;try{const{error}=await db.from('cirurgioes').delete().eq('id',id);if(error)throw error;await loadCirurgioes();loadCirurgioesList();}catch(e){alert('Erro: '+e.message);}}
+
+        async function loadCirurgias(){
+            if(!db)return;
+            try{const{data,error}=await db.from('cirurgias').select(`*,cirurgiao:cirurgioes!cirurgiao_id(nome),auxiliar1:cirurgioes!auxiliar1_id(nome),auxiliar2:cirurgioes!auxiliar2_id(nome)`).order('data',{ascending:false});if(error)throw error;allCirurgias=data||[];filteredCirurgias=allCirurgias;updateDashboard();}catch(e){console.error('Erro cirurgias:',e);}
+        }
+
+        async function deleteCirurgia(id){if(!confirm('Excluir?'))return;try{const{error}=await db.from('cirurgias').delete().eq('id',id);if(error)throw error;await loadCirurgias();}catch(e){alert('Erro: '+e.message);}}
+
+        async function editCirurgia(id){
+            const c=allCirurgias.find(x=>x.id===id);if(!c)return;
+            const p=prompt('Nome do Paciente:',c.paciente);if(!p)return;
+            const d=prompt('Data (AAAA-MM-DD):',c.data);if(!d)return;
+            const o=prompt('Observações:',c.observacoes||'');
+            try{const{error}=await db.from('cirurgias').update({paciente:p.trim(),data:d,observacoes:o?o.trim():null}).eq('id',id);if(error)throw error;await loadCirurgias();alert('Atualizado!');}catch(e){alert('Erro: '+e.message);}
+        }
+
+        function formatDate(d){return new Date(d+'T12:00:00').toLocaleDateString('pt-BR');}
+
+        function filterByPeriod(p){
+            const t=new Date();t.setHours(0,0,0,0);const ts=t.toISOString().split('T')[0];
+            if(p==='today')filteredCirurgias=allCirurgias.filter(c=>c.data===ts);
+            else if(p==='month')filteredCirurgias=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');return d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();});
+            else if(p==='year')filteredCirurgias=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');return d.getFullYear()===t.getFullYear();});
+            updateDashboard();
+        }
+
+        function showCustomDateFilter(){document.getElementById('customDateFilter').classList.toggle('hidden');}
+
+        function applyCustomFilter(){
+            const s=document.getElementById('filterStartDate').value;
+            const e=document.getElementById('filterEndDate').value;
+            filteredCirurgias=allCirurgias.filter(c=>c.data>=s&&c.data<=e);
+            updateDashboard();
+        }
+
+        function updateStats(){
+            const t=new Date().toISOString().split('T')[0];
+            const tc=allCirurgias.filter(c=>c.data===t).length;
+            const mc=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;
+            document.getElementById('totalCirurgias').textContent=allCirurgias.length;
+            document.getElementById('cirurgiasHoje').textContent=tc;
+            document.getElementById('cirurgiasMes').textContent=mc;
+        }
+
+        function updateDashboard(){updateStats();updateTable();updateCirurgiaoStats();}
+
+        function updateTable(){
+            const tb=document.getElementById('cirurgiasTableBody');tb.innerHTML='';
+            if(filteredCirurgias.length===0){tb.innerHTML='<tr><td colspan="7" class="text-center py-4 text-gray-500">Nenhuma cirurgia encontrada</td></tr>';return;}
+            filteredCirurgias.forEach(c=>{
+                const tr=document.createElement('tr');tr.className='border-b hover:bg-gray-50';
+                tr.innerHTML=`<td class="px-4 py-2">${formatDate(c.data)}</td><td class="px-4 py-2">${c.paciente}</td><td class="px-4 py-2">${c.cirurgiao?.nome||'N/A'}</td><td class="px-4 py-2">${c.auxiliar1?.nome||'-'}</td><td class="px-4 py-2">${c.auxiliar2?.nome||'-'}</td><td class="px-4 py-2">${c.observacoes||'-'}</td><td class="px-4 py-2"><button onclick="editCirurgia(${c.id})" class="text-blue-600 hover:text-blue-800 mr-3">Editar</button><button onclick="deleteCirurgia(${c.id})" class="text-red-600 hover:text-red-800">Excluir</button></td>`;
+                tb.appendChild(tr);
+            });
+        }
+
+        function updateCirurgiaoStats(){
+            const stats={};
+            filteredCirurgias.forEach(c=>{
+                if(c.cirurgiao?.nome){if(!stats[c.cirurgiao.nome])stats[c.cirurgiao.nome]={principal:0,auxiliar:0,total:0};stats[c.cirurgiao.nome].principal++;stats[c.cirurgiao.nome].total++;}
+                if(c.auxiliar1?.nome){if(!stats[c.auxiliar1.nome])stats[c.auxiliar1.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar1.nome].auxiliar++;stats[c.auxiliar1.nome].total++;}
+                if(c.auxiliar2?.nome){if(!stats[c.auxiliar2.nome])stats[c.auxiliar2.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar2.nome].auxiliar++;stats[c.auxiliar2.nome].total++;}
+            });
+            const con=document.getElementById('cirurgiaoStats');con.innerHTML='';
+            const cols=['bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500','bg-pink-500','bg-indigo-500','bg-teal-500','bg-red-500','bg-yellow-500'];
+            let i=0;
+            for(const[nome,s]of Object.entries(stats).sort((a,b)=>b[1].total-a[1].total)){
+                const div=document.createElement('div');
+                div.className=`${cols[i%cols.length]} text-white rounded-lg p-4 shadow-lg`;
+                div.innerHTML=`<h4 class="font-bold text-lg mb-2">${nome}</h4><div class="text-3xl font-bold mb-2">${s.total}</div><div class="text-sm opacity-90"><div>Principal: ${s.principal}</div><div>Auxiliar: ${s.auxiliar}</div></div>`;
+                con.appendChild(div);i++;
+            }
+            if(Object.keys(stats).length===0)con.innerHTML='<div class="col-span-full text-center text-gray-500 py-8">Nenhum dado para exibir</div>';
+        }
+
+        function printDailyReport(){
+            const t=new Date().toISOString().split('T')[0];
+            const tc=allCirurgias.filter(c=>c.data===t);
+            const pa=document.getElementById('printArea');
+            pa.innerHTML=`<div style="padding:20px;"><h1 style="text-align:center;margin-bottom:20px;">CENSO DIÁRIO DE CIRURGIAS</h1><p style="text-align:center;margin-bottom:30px;"><strong>Data: ${formatDate(t)}</strong></p><table style="width:100%;border-collapse:collapse;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Paciente</th><th style="border:1px solid black;padding:10px;">Cirurgião Principal</th><th style="border:1px solid black;padding:10px;">1º Auxiliar</th><th style="border:1px solid black;padding:10px;">2º Auxiliar</th><th style="border:1px solid black;padding:10px;">Observações</th></tr></thead><tbody>${tc.length>0?tc.map(c=>`<tr><td style="border:1px solid black;padding:10px;">${c.paciente}</td><td style="border:1px solid black;padding:10px;">${c.cirurgiao?.nome||'N/A'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar1?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar2?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.observacoes||'-'}</td></tr>`).join(''):'<tr><td colspan="5" style="border:1px solid black;padding:10px;text-align:center;">Nenhuma cirurgia registrada hoje</td></tr>'}</tbody></table><p style="margin-top:30px;">Total: ${tc.length} cirurgia(s)</p></div>`;
+            pa.classList.remove('hidden');window.print();pa.classList.add('hidden');
+        }
+
+        function exportCSV(){
+            if(filteredCirurgias.length===0){alert('Não há dados!');return;}
+            const csv=[['Data','Paciente','Cirurgião Principal','1º Auxiliar','2º Auxiliar','Observações'],...filteredCirurgias.map(c=>[formatDate(c.data),c.paciente,c.cirurgiao?.nome||'N/A',c.auxiliar1?.nome||'-',c.auxiliar2?.nome||'-',c.observacoes||''])].map(r=>r.join(';')).join('\n');
+            const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+            const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`cirurgias_${new Date().toISOString().split('T')[0]}.csv`;link.click();
+        }
+
+        function exportPDF(){
+            if(filteredCirurgias.length===0){alert('Não há dados!');return;}
+            const{jsPDF}=window.jspdf;
+            const doc=new jsPDF('landscape');
+            doc.setFontSize(16);doc.text('Relatório de Cirurgias',148,15,{align:'center'});
+            const td=filteredCirurgias.map(c=>[formatDate(c.data),c.paciente,c.cirurgiao?.nome||'N/A',c.auxiliar1?.nome||'-',c.auxiliar2?.nome||'-',c.observacoes||'-']);
+            doc.autoTable({head:[['Data','Paciente','Cirurgião Principal','1º Auxiliar','2º Auxiliar','Observações']],body:td,startY:25,styles:{fontSize:8}});
+            doc.save(`cirurgias_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        function showMessage(id,msg,type){
+            const el=document.getElementById(id);
+            el.className=type==='success'?'p-4 bg-green-100 text-green-700 rounded-lg':'p-4 bg-red-100 text-red-700 rounded-lg';
+            el.textContent=msg;
+            setTimeout(()=>{el.textContent='';el.className='';},5000);
+        }
+
+        document.getElementById('cirurgiaoForm').addEventListener('submit',async(e)=>{
+            e.preventDefault();
+            const n=document.getElementById('nomeCirurgiao').value.trim();
+            try{const{error}=await db.from('cirurgioes').insert([{nome:n}]);if(error)throw error;showMessage('cirurgiaoMessage','Cirurgião cadastrado!','success');document.getElementById('nomeCirurgiao').value='';await loadCirurgioes();loadCirurgioesList();}catch(e){showMessage('cirurgiaoMessage','Erro: '+e.message,'error');}
+        });
+
+        document.getElementById('cirurgiaForm').addEventListener('submit',async(e)=>{
+            e.preventDefault();
+            const a1=document.getElementById('auxiliar1Select').value;
+            const a2=document.getElementById('auxiliar2Select').value;
+            const cir={paciente:document.getElementById('nomePaciente').value.trim(),data:document.getElementById('dataCirurgia').value,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
+            try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;showMessage('formMessage','Cirurgia registrada!','success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
+        });
+
+        window.addEventListener('DOMContentLoaded',()=>{
+            console.log('✅ Sistema carregado');
+            document.getElementById('loginForm').addEventListener('submit',handleLogin);
+            const logged=sessionStorage.getItem('isLoggedIn');
+            if(logged==='true'){
+                isLoggedIn=true;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                initializeApp();
+            }
+        });
+    </script>
+</body>
+</html>
