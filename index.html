@@ -104,10 +104,11 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Total de Cirurgias</h3><p id="totalCirurgias" class="text-3xl font-bold text-blue-600 mt-2">0</p></div>
                     <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Cirurgias Hoje</h3><p id="cirurgiasHoje" class="text-3xl font-bold text-green-600 mt-2">0</p></div>
                     <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Cirurgias Este Mês</h3><p id="cirurgiasMes" class="text-3xl font-bold text-purple-600 mt-2">0</p></div>
+                    <div class="bg-white rounded-lg shadow-md p-6"><h3 class="text-gray-600 text-sm font-medium">Cirurgias Faltantes</h3><p id="cirurgiasFaltantes" class="text-3xl font-bold text-orange-600 mt-2">100</p></div>
                 </div>
 
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -118,6 +119,7 @@
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div class="flex flex-wrap gap-4">
                         <button onclick="printDailyReport()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">🖨️ Imprimir Relatório Diário</button>
+                        <button onclick="printMonthlyReport()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">📊 Imprimir Relatório Mensal</button>
                         <button onclick="exportCSV()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">📄 Exportar CSV</button>
                         <button onclick="exportPDF()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">📕 Exportar PDF</button>
                     </div>
@@ -128,7 +130,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-100">
-                                <tr><th class="px-4 py-2 text-left text-gray-700">Data</th><th class="px-4 py-2 text-left text-gray-700">Paciente</th><th class="px-4 py-2 text-left text-gray-700">Cirurgião Principal</th><th class="px-4 py-2 text-left text-gray-700">1º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">2º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">Observações</th><th class="px-4 py-2 text-left text-gray-700">Ações</th></tr>
+                                <tr><th class="px-4 py-2 text-left text-gray-700">Nº</th><th class="px-4 py-2 text-left text-gray-700"></th>Data</th><th class="px-4 py-2 text-left text-gray-700">Paciente</th><th class="px-4 py-2 text-left text-gray-700">Cirurgião Principal</th><th class="px-4 py-2 text-left text-gray-700">1º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">2º Auxiliar</th><th class="px-4 py-2 text-left text-gray-700">Observações</th><th class="px-4 py-2 text-left text-gray-700">Ações</th></tr>
                             </thead>
                             <tbody id="cirurgiasTableBody"></tbody>
                         </table>
@@ -146,6 +148,11 @@
                         </form>
                         <div id="cirurgiaoMessage" class="mt-4"></div>
                         <div class="mt-6"><h3 class="text-lg font-bold mb-3 text-gray-800">Cirurgiões Cadastrados</h3><ul id="cirurgioesList" class="space-y-2"></ul></div>
+                        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <h4 class="font-bold text-yellow-800 mb-2">🔧 Manutenção da Numeração</h4>
+                            <p class="text-sm text-yellow-700 mb-3">Se a numeração das cirurgias estiver inconsistente, clique no botão abaixo para corrigir:</p>
+                            <button onclick="atualizarNumeracaoMes();loadCirurgias();" class="w-full bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700 transition">🔄 Corrigir Numeração Mensal</button>
+                        </div>
                     </div>
 
                     <div class="bg-white rounded-lg shadow-md p-6">
@@ -165,12 +172,16 @@ CREATE TABLE cirurgias (
   id BIGSERIAL PRIMARY KEY,
   paciente TEXT NOT NULL,
   data DATE NOT NULL,
+  numero_mes INTEGER NOT NULL,
   cirurgiao_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
   auxiliar1_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
   auxiliar2_id BIGINT REFERENCES cirurgioes(id) ON DELETE SET NULL,
   observacoes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
+
+-- Se tabela cirurgias já existe, adicionar coluna numero_mes:
+-- ALTER TABLE cirurgias ADD COLUMN numero_mes INTEGER NOT NULL DEFAULT 1;
 
 -- Habilitar RLS
 ALTER TABLE cirurgioes ENABLE ROW LEVEL SECURITY;
@@ -224,7 +235,7 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
 
         async function initializeApp(){
             if(!db)alert('⚠️ Supabase não configurado. Vá na aba Configuração.');
-            await loadCirurgioes();await loadCirurgias();updateStats();setTodayDate();
+            await loadCirurgioes();await loadCirurgias();await atualizarNumeracaoMes();updateStats();setTodayDate();
         }
 
         function setTodayDate(){
@@ -269,17 +280,111 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
 
         async function loadCirurgias(){
             if(!db)return;
-            try{const{data,error}=await db.from('cirurgias').select(`*,cirurgiao:cirurgioes!cirurgiao_id(nome),auxiliar1:cirurgioes!auxiliar1_id(nome),auxiliar2:cirurgioes!auxiliar2_id(nome)`).order('data',{ascending:false});if(error)throw error;allCirurgias=data||[];filteredCirurgias=allCirurgias;updateDashboard();}catch(e){console.error('Erro cirurgias:',e);}
+            try{const{data,error}=await db.from('cirurgias').select(`*,cirurgiao:cirurgioes!cirurgiao_id(nome),auxiliar1:cirurgioes!auxiliar1_id(nome),auxiliar2:cirurgioes!auxiliar2_id(nome)`).order('data',{ascending:false}).order('numero_mes',{ascending:false});if(error)throw error;allCirurgias=data||[];filteredCirurgias=allCirurgias;updateDashboard();}catch(e){console.error('Erro cirurgias:',e);}
+        }
+
+        async function getNextNumeroMes(data){
+            if(!db)return 1;
+            const d=new Date(data+'T12:00:00');
+            const primeiroDia=new Date(d.getFullYear(),d.getMonth(),1).toISOString().split('T')[0];
+            const ultimoDia=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0];
+            try{
+                // Buscar todas as cirurgias do mês para encontrar o maior número
+                const{data:mesCirurgias,error}=await db.from('cirurgias').select('numero_mes').gte('data',primeiroDia).lte('data',ultimoDia);
+                if(error)throw error;
+                
+                // Encontrar o maior número existente
+                let maxNum=0;
+                mesCirurgias.forEach(c=>{
+                    if(c.numero_mes && c.numero_mes > maxNum){
+                        maxNum=c.numero_mes;
+                    }
+                });
+                
+                const proximoNumero=maxNum+1;
+                console.log(`Próximo número para ${data}: ${proximoNumero} (máximo atual: ${maxNum})`);
+                return proximoNumero;
+            }catch(e){
+                console.error('Erro ao obter próximo número:',e);
+                return 1;
+            }
+        }
+
+        async function atualizarNumeracaoMes(){
+            if(!db)return;
+            try{
+                const{data:allCirurgias,error}=await db.from('cirurgias').select('id,data,numero_mes').order('data');
+                if(error)throw error;
+                
+                const cirurgiasPorMes={};
+                allCirurgias.forEach(c=>{
+                    const d=new Date(c.data+'T12:00:00');
+                    const chaveMes=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                    if(!cirurgiasPorMes[chaveMes])cirurgiasPorMes[chaveMes]=[];
+                    cirurgiasPorMes[chaveMes].push(c);
+                });
+                
+                for(const[chaveMes,cirurgias]of Object.entries(cirurgiasPorMes)){
+                    // Ordenar por data para numerar corretamente
+                    cirurgias.sort((a,b)=>new Date(a.data)-new Date(b.data));
+                    
+                    // Atualizar cada cirurgia com número sequencial único
+                    for(let i=0;i<cirurgias.length;i++){
+                        const numeroCorreto=i+1;
+                        if(cirurgias[i].numero_mes!==numeroCorreto){
+                            console.log(`Atualizando cirurgia ${cirurgias[i].id} de ${cirurgias[i].numero_mes} para ${numeroCorreto}`);
+                            await db.from('cirurgias').update({numero_mes:numeroCorreto}).eq('id',cirurgias[i].id);
+                        }
+                    }
+                }
+                console.log('✅ Numeração mensal atualizada - sem duplicatas');
+            }catch(e){
+                console.error('Erro ao atualizar numeração:',e);
+            }
         }
 
         async function deleteCirurgia(id){if(!confirm('Excluir?'))return;try{const{error}=await db.from('cirurgias').delete().eq('id',id);if(error)throw error;await loadCirurgias();}catch(e){alert('Erro: '+e.message);}}
 
         async function editCirurgia(id){
             const c=allCirurgias.find(x=>x.id===id);if(!c)return;
-            const p=prompt('Nome do Paciente:',c.paciente);if(!p)return;
-            const d=prompt('Data (AAAA-MM-DD):',c.data);if(!d)return;
-            const o=prompt('Observações:',c.observacoes||'');
-            try{const{error}=await db.from('cirurgias').update({paciente:p.trim(),data:d,observacoes:o?o.trim():null}).eq('id',id);if(error)throw error;await loadCirurgias();alert('Atualizado!');}catch(e){alert('Erro: '+e.message);}
+            
+            const modal=document.createElement('div');
+            modal.className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML=`
+                <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                    <h3 class="text-xl font-bold mb-4">Editar Cirurgia</h3>
+                    <form id="editForm" class="space-y-4">
+                        <div><label class="block text-gray-700 font-medium mb-2">Nome do Paciente *</label><input type="text" id="editPaciente" required value="${c.paciente}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Data da Cirurgia *</label><input type="date" id="editData" required value="${c.data}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Cirurgião Principal *</label><select id="editCirurgiao" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">1º Auxiliar</label><select id="editAuxiliar1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">2º Auxiliar</label><select id="editAuxiliar2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select></div>
+                        <div><label class="block text-gray-700 font-medium mb-2">Observações</label><textarea id="editObservacoes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">${c.observacoes||''}</textarea></div>
+                        <div class="flex gap-3">
+                            <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Salvar</button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            ['editCirurgiao','editAuxiliar1','editAuxiliar2'].forEach(id=>{
+                const s=document.getElementById(id);s.innerHTML='<option value="">Selecione um cirurgião</option>';
+                cirurgioes.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;s.appendChild(o);});
+            });
+            
+            document.getElementById('editCirurgiao').value=c.cirurgiao_id||'';
+            document.getElementById('editAuxiliar1').value=c.auxiliar1_id||'';
+            document.getElementById('editAuxiliar2').value=c.auxiliar2_id||'';
+            
+            document.getElementById('editForm').addEventListener('submit',async(e)=>{
+                e.preventDefault();
+                const a1=document.getElementById('editAuxiliar1').value;
+                const a2=document.getElementById('editAuxiliar2').value;
+                const update={paciente:document.getElementById('editPaciente').value.trim(),data:document.getElementById('editData').value,cirurgiao_id:parseInt(document.getElementById('editCirurgiao').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('editObservacoes').value.trim()};
+                try{const{error}=await db.from('cirurgias').update(update).eq('id',id);if(error)throw error;await loadCirurgias();modal.remove();alert('Atualizado!');}catch(e){alert('Erro: '+e.message);}
+            });
         }
 
         function formatDate(d){return new Date(d+'T12:00:00').toLocaleDateString('pt-BR');}
@@ -305,19 +410,30 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
             const t=new Date().toISOString().split('T')[0];
             const tc=allCirurgias.filter(c=>c.data===t).length;
             const mc=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;
+            const faltantes=Math.max(0,100-mc);
             document.getElementById('totalCirurgias').textContent=allCirurgias.length;
             document.getElementById('cirurgiasHoje').textContent=tc;
             document.getElementById('cirurgiasMes').textContent=mc;
+            document.getElementById('cirurgiasFaltantes').textContent=faltantes;
         }
 
         function updateDashboard(){updateStats();updateTable();updateCirurgiaoStats();}
 
         function updateTable(){
             const tb=document.getElementById('cirurgiasTableBody');tb.innerHTML='';
-            if(filteredCirurgias.length===0){tb.innerHTML='<tr><td colspan="7" class="text-center py-4 text-gray-500">Nenhuma cirurgia encontrada</td></tr>';return;}
-            filteredCirurgias.forEach(c=>{
+            if(filteredCirurgias.length===0){tb.innerHTML='<tr><td colspan="8" class="text-center py-4 text-gray-500">Nenhuma cirurgia encontrada</td></tr>';return;}
+            // Ordenar por data decrescente e número decrescente
+            const sortedData=[...filteredCirurgias].sort((a,b)=>{
+                const dateA=new Date(a.data+'T12:00:00');
+                const dateB=new Date(b.data+'T12:00:00');
+                if(dateB.getTime()!==dateA.getTime()){
+                    return dateB.getTime()-dateA.getTime();
+                }
+                return (b.numero_mes||0)-(a.numero_mes||0);
+            });
+            sortedData.forEach(c=>{
                 const tr=document.createElement('tr');tr.className='border-b hover:bg-gray-50';
-                tr.innerHTML=`<td class="px-4 py-2">${formatDate(c.data)}</td><td class="px-4 py-2">${c.paciente}</td><td class="px-4 py-2">${c.cirurgiao?.nome||'N/A'}</td><td class="px-4 py-2">${c.auxiliar1?.nome||'-'}</td><td class="px-4 py-2">${c.auxiliar2?.nome||'-'}</td><td class="px-4 py-2">${c.observacoes||'-'}</td><td class="px-4 py-2"><button onclick="editCirurgia(${c.id})" class="text-blue-600 hover:text-blue-800 mr-3">Editar</button><button onclick="deleteCirurgia(${c.id})" class="text-red-600 hover:text-red-800">Excluir</button></td>`;
+                tr.innerHTML=`<td class="px-4 py-2 font-bold">${c.numero_mes||'-'}</td><td class="px-4 py-2">${formatDate(c.data)}</td><td class="px-4 py-2">${c.paciente}</td><td class="px-4 py-2">${c.cirurgiao?.nome||'N/A'}</td><td class="px-4 py-2">${c.auxiliar1?.nome||'-'}</td><td class="px-4 py-2">${c.auxiliar2?.nome||'-'}</td><td class="px-4 py-2">${c.observacoes||'-'}</td><td class="px-4 py-2"><button onclick="editCirurgia(${c.id})" class="text-blue-600 hover:text-blue-800 mr-3">Editar</button><button onclick="deleteCirurgia(${c.id})" class="text-red-600 hover:text-red-800">Excluir</button></td>`;
                 tb.appendChild(tr);
             });
         }
@@ -344,14 +460,55 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
         function printDailyReport(){
             const t=new Date().toISOString().split('T')[0];
             const tc=allCirurgias.filter(c=>c.data===t);
+            const stats={};
+            tc.forEach(c=>{if(c.cirurgiao?.nome){if(!stats[c.cirurgiao.nome])stats[c.cirurgiao.nome]=0;stats[c.cirurgiao.nome]++;}});
             const pa=document.getElementById('printArea');
-            pa.innerHTML=`<div style="padding:20px;"><h1 style="text-align:center;margin-bottom:20px;">CENSO DIÁRIO DE CIRURGIAS</h1><p style="text-align:center;margin-bottom:30px;"><strong>Data: ${formatDate(t)}</strong></p><table style="width:100%;border-collapse:collapse;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Paciente</th><th style="border:1px solid black;padding:10px;">Cirurgião Principal</th><th style="border:1px solid black;padding:10px;">1º Auxiliar</th><th style="border:1px solid black;padding:10px;">2º Auxiliar</th><th style="border:1px solid black;padding:10px;">Observações</th></tr></thead><tbody>${tc.length>0?tc.map(c=>`<tr><td style="border:1px solid black;padding:10px;">${c.paciente}</td><td style="border:1px solid black;padding:10px;">${c.cirurgiao?.nome||'N/A'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar1?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar2?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.observacoes||'-'}</td></tr>`).join(''):'<tr><td colspan="5" style="border:1px solid black;padding:10px;text-align:center;">Nenhuma cirurgia registrada hoje</td></tr>'}</tbody></table><p style="margin-top:30px;">Total: ${tc.length} cirurgia(s)</p></div>`;
+            pa.innerHTML=`<div style="padding:20px;"><h1 style="text-align:center;margin-bottom:20px;">CENSO DIÁRIO DE CIRURGIAS</h1><p style="text-align:center;margin-bottom:30px;"><strong>Data: ${formatDate(t)}</strong></p><table style="width:100%;border-collapse:collapse;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Nº</th><th style="border:1px solid black;padding:10px;">Paciente</th><th style="border:1px solid black;padding:10px;">Cirurgião Principal</th><th style="border:1px solid black;padding:10px;">1º Auxiliar</th><th style="border:1px solid black;padding:10px;">2º Auxiliar</th><th style="border:1px solid black;padding:10px;">Observações</th></tr></thead><tbody>${tc.length>0?tc.map(c=>`<tr><td style="border:1px solid black;padding:10px;">${c.numero_mes||'-'}</td><td style="border:1px solid black;padding:10px;">${c.paciente}</td><td style="border:1px solid black;padding:10px;">${c.cirurgiao?.nome||'N/A'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar1?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar2?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.observacoes||'-'}</td></tr>`).join(''):'<tr><td colspan="6" style="border:1px solid black;padding:10px;text-align:center;">Nenhuma cirurgia registrada hoje</td></tr>'}</tbody></table><p style="margin-top:30px;">Total: ${tc.length} cirurgia(s)</p>${Object.keys(stats).length>0?`<div style="margin-top:30px;"><h3>Estatísticas por Profissional:</h3><table style="width:100%;border-collapse:collapse;margin-top:10px;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Profissional</th><th style="border:1px solid black;padding:10px;">Cirurgias</th></tr></thead><tbody>${Object.entries(stats).map(([nome,qtd])=>`<tr><td style="border:1px solid black;padding:10px;">${nome}</td><td style="border:1px solid black;padding:10px;">${qtd}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;
+            pa.classList.remove('hidden');window.print();pa.classList.add('hidden');
+        }
+
+        function printMonthlyReport(){
+            const now=new Date();
+            const primeiroDia=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+            const ultimoDia=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+            const mc=allCirurgias.filter(c=>c.data>=primeiroDia&&c.data<=ultimoDia);
+            const stats={};
+            mc.forEach(c=>{
+                if(c.cirurgiao?.nome){if(!stats[c.cirurgiao.nome])stats[c.cirurgiao.nome]={principal:0,auxiliar:0,total:0};stats[c.cirurgiao.nome].principal++;stats[c.cirurgiao.nome].total++;}
+                if(c.auxiliar1?.nome){if(!stats[c.auxiliar1.nome])stats[c.auxiliar1.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar1.nome].auxiliar++;stats[c.auxiliar1.nome].total++;}
+                if(c.auxiliar2?.nome){if(!stats[c.auxiliar2.nome])stats[c.auxiliar2.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar2.nome].auxiliar++;stats[c.auxiliar2.nome].total++;}
+            });
+            const pa=document.getElementById('printArea');
+            const mesAno=now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+            pa.innerHTML=`<div style="padding:20px;"><h1 style="text-align:center;margin-bottom:20px;">RELATÓRIO MENSAL DE CIRURGIAS</h1><p style="text-align:center;margin-bottom:30px;"><strong>${mesAno.charAt(0).toUpperCase()+mesAno.slice(1)}</strong></p><table style="width:100%;border-collapse:collapse;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Nº</th><th style="border:1px solid black;padding:10px;">Data</th><th style="border:1px solid black;padding:10px;">Paciente</th><th style="border:1px solid black;padding:10px;">Cirurgião Principal</th><th style="border:1px solid black;padding:10px;">1º Auxiliar</th><th style="border:1px solid black;padding:10px;">2º Auxiliar</th><th style="border:1px solid black;padding:10px;">Observações</th></tr></thead><tbody>${mc.length>0?mc.map(c=>`<tr><td style="border:1px solid black;padding:10px;">${c.numero_mes||'-'}</td><td style="border:1px solid black;padding:10px;">${formatDate(c.data)}</td><td style="border:1px solid black;padding:10px;">${c.paciente}</td><td style="border:1px solid black;padding:10px;">${c.cirurgiao?.nome||'N/A'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar1?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.auxiliar2?.nome||'-'}</td><td style="border:1px solid black;padding:10px;">${c.observacoes||'-'}</td></tr>`).join(''):'<tr><td colspan="7" style="border:1px solid black;padding:10px;text-align:center;">Nenhuma cirurgia registrada este mês</td></tr>'}</tbody></table><p style="margin-top:30px;"><strong>Total de cirurgias este mês: ${mc.length}</strong> ${mc.length<100?`(${100-mc.length} faltantes para completar 100)`:''}</p>${Object.keys(stats).length>0?`<div style="margin-top:30px;"><h3>Estatísticas por Profissional (para faturamento):</h3><table style="width:100%;border-collapse:collapse;margin-top:10px;"><thead><tr style="background-color:#f2f2f2;"><th style="border:1px solid black;padding:10px;">Profissional</th><th style="border:1px solid black;padding:10px;">Como Principal</th><th style="border:1px solid black;padding:10px;">Como Auxiliar</th><th style="border:1px solid black;padding:10px;">Total</th></tr></thead><tbody>${Object.entries(stats).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>`<tr><td style="border:1px solid black;padding:10px;">${nome}</td><td style="border:1px solid black;padding:10px;">${s.principal}</td><td style="border:1px solid black;padding:10px;">${s.auxiliar}</td><td style="border:1px solid black;padding:10px;">${s.total}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;
             pa.classList.remove('hidden');window.print();pa.classList.add('hidden');
         }
 
         function exportCSV(){
             if(filteredCirurgias.length===0){alert('Não há dados!');return;}
-            const csv=[['Data','Paciente','Cirurgião Principal','1º Auxiliar','2º Auxiliar','Observações'],...filteredCirurgias.map(c=>[formatDate(c.data),c.paciente,c.cirurgiao?.nome||'N/A',c.auxiliar1?.nome||'-',c.auxiliar2?.nome||'-',c.observacoes||''])].map(r=>r.join(';')).join('\n');
+            const stats={};
+            filteredCirurgias.forEach(c=>{
+                if(c.cirurgiao?.nome){if(!stats[c.cirurgiao.nome])stats[c.cirurgiao.nome]={principal:0,auxiliar:0,total:0};stats[c.cirurgiao.nome].principal++;stats[c.cirurgiao.nome].total++;}
+                if(c.auxiliar1?.nome){if(!stats[c.auxiliar1.nome])stats[c.auxiliar1.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar1.nome].auxiliar++;stats[c.auxiliar1.nome].total++;}
+                if(c.auxiliar2?.nome){if(!stats[c.auxiliar2.nome])stats[c.auxiliar2.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar2.nome].auxiliar++;stats[c.auxiliar2.nome].total++;}
+            });
+            
+            // Ordenar por data decrescente e número decrescente
+            const sortedData=[...filteredCirurgias].sort((a,b)=>{
+                const dateA=new Date(a.data+'T12:00:00');
+                const dateB=new Date(b.data+'T12:00:00');
+                if(dateB.getTime()!==dateA.getTime()){
+                    return dateB.getTime()-dateA.getTime();
+                }
+                return (b.numero_mes||0)-(a.numero_mes||0);
+            });
+            
+            let csv='Nº;Data;Paciente;Cirurgião Principal;1º Auxiliar;2º Auxiliar;Observações\n';
+            csv+=sortedData.map(c=>`${c.numero_mes||'-'};${formatDate(c.data)};${c.paciente};${c.cirurgiao?.nome||'N/A'};${c.auxiliar1?.nome||'-'};${c.auxiliar2?.nome||'-'};"${c.observacoes||'-'}"`).join('\n');
+            csv+='\n\nESTATÍSTICAS POR PROFISSIONAL (PARA FATURAMENTO)\n';
+            csv+='Profissional;Como Principal;Como Auxiliar;Total\n';
+            csv+=Object.entries(stats).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>`${nome};${s.principal};${s.auxiliar};${s.total}`).join('\n');
+            
             const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
             const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`cirurgias_${new Date().toISOString().split('T')[0]}.csv`;link.click();
         }
@@ -359,10 +516,51 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
         function exportPDF(){
             if(filteredCirurgias.length===0){alert('Não há dados!');return;}
             const{jsPDF}=window.jspdf;
-            const doc=new jsPDF('landscape');
-            doc.setFontSize(16);doc.text('Relatório de Cirurgias',148,15,{align:'center'});
-            const td=filteredCirurgias.map(c=>[formatDate(c.data),c.paciente,c.cirurgiao?.nome||'N/A',c.auxiliar1?.nome||'-',c.auxiliar2?.nome||'-',c.observacoes||'-']);
-            doc.autoTable({head:[['Data','Paciente','Cirurgião Principal','1º Auxiliar','2º Auxiliar','Observações']],body:td,startY:25,styles:{fontSize:8}});
+            const doc=new jsPDF();
+            
+            // Ordenar por data decrescente e número decrescente
+            const sortedData=[...filteredCirurgias].sort((a,b)=>{
+                const dateA=new Date(a.data+'T12:00:00');
+                const dateB=new Date(b.data+'T12:00:00');
+                if(dateB.getTime()!==dateA.getTime()){
+                    return dateB.getTime()-dateA.getTime();
+                }
+                return (b.numero_mes||0)-(a.numero_mes||0);
+            });
+            
+            // Título
+            doc.setFontSize(16);doc.text('Relatório de Cirurgias',105,15,{align:'center'});
+            
+            // Tabela de cirurgias
+            const td=sortedData.map(c=>[c.numero_mes||'-',formatDate(c.data),c.paciente,c.cirurgiao?.nome||'N/A',c.auxiliar1?.nome||'-',c.auxiliar2?.nome||'-',c.observacoes||'-']);
+            doc.autoTable({
+                head:[['Nº','Data','Paciente','Cirurgião','1º Aux','2º Aux','Obs']],
+                body:td,
+                startY:25,
+                styles:{fontSize:8},
+                columnStyles:{0:{cellWidth:15},1:{cellWidth:25},2:{cellWidth:40},3:{cellWidth:30},4:{cellWidth:25},5:{cellWidth:25},6:{cellWidth:30}}
+            });
+            
+            // Estatísticas
+            const stats={};
+            filteredCirurgias.forEach(c=>{
+                if(c.cirurgiao?.nome){if(!stats[c.cirurgiao.nome])stats[c.cirurgiao.nome]={principal:0,auxiliar:0,total:0};stats[c.cirurgiao.nome].principal++;stats[c.cirurgiao.nome].total++;}
+                if(c.auxiliar1?.nome){if(!stats[c.auxiliar1.nome])stats[c.auxiliar1.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar1.nome].auxiliar++;stats[c.auxiliar1.nome].total++;}
+                if(c.auxiliar2?.nome){if(!stats[c.auxiliar2.nome])stats[c.auxiliar2.nome]={principal:0,auxiliar:0,total:0};stats[c.auxiliar2.nome].auxiliar++;stats[c.auxiliar2.nome].total++;}
+            });
+            
+            const finalY=doc.lastAutoTable.finalY||25;
+            doc.setFontSize(12);doc.text('ESTATÍSTICAS POR PROFISSIONAL (PARA FATURAMENTO)',105,finalY+10,{align:'center'});
+            
+            const statsData=Object.entries(stats).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>[nome,s.principal.toString(),s.auxiliar.toString(),s.total.toString()]);
+            doc.autoTable({
+                head:[['Profissional','Principal','Auxiliar','Total']],
+                body:statsData,
+                startY:finalY+15,
+                styles:{fontSize:9},
+                columnStyles:{0:{cellWidth:50},1:{cellWidth:30},2:{cellWidth:30},3:{cellWidth:20}}
+            });
+            
             doc.save(`cirurgias_${new Date().toISOString().split('T')[0]}.pdf`);
         }
 
@@ -381,10 +579,19 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
 
         document.getElementById('cirurgiaForm').addEventListener('submit',async(e)=>{
             e.preventDefault();
+            const data=document.getElementById('dataCirurgia').value;
+            const numeroMes=await getNextNumeroMes(data);
+            
+            // Verificação adicional para evitar duplicatas
+            if(numeroMes > 100){
+                alert('⚠️ Limite de 100 cirurgias por mês atingido!');
+                return;
+            }
+            
             const a1=document.getElementById('auxiliar1Select').value;
             const a2=document.getElementById('auxiliar2Select').value;
-            const cir={paciente:document.getElementById('nomePaciente').value.trim(),data:document.getElementById('dataCirurgia').value,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
-            try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;showMessage('formMessage','Cirurgia registrada!','success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
+            const cir={paciente:document.getElementById('nomePaciente').value.trim(),data:data,numero_mes:numeroMes,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
+            try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;showMessage('formMessage','Cirurgia registrada! Nº '+numeroMes,'success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
         });
 
         window.addEventListener('DOMContentLoaded',()=>{
