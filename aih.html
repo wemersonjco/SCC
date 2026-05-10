@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laudo para Solicitação de Autorização de Internação Hospitalar</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            font-size: 10px; /* Reduzi ainda mais o tamanho da fonte */
+        }
+        .container {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px; /* Reduzi o padding */
+            margin: 0 auto;
+            max-width: 1000px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px; /* Reduzi a margem */
+            padding-bottom: 5px;
+            border-bottom: 1px solid #006BA6;
+        }
+        .sus-logo {
+            width: 30px; /* Reduzi o tamanho */
+            height: 30px;
+            margin-right: 10px;
+        }
+        .title {
+            flex-grow: 1;
+            text-align: center;
+            font-size: 14px; /* Reduzi o tamanho */
+            font-weight: bold;
+            color: #006BA6;
+        }
+        .section {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 3px; /* Reduzi o padding */
+            margin-bottom: 3px; /* Reduzi a margem */
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #006BA6;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+            font-size: 10px;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 3px; /* Reduzi a margem */
+        }
+        .col {
+            flex: 1;
+            min-width: 150px;
+            padding: 0 2px; /* Reduzi o padding */
+        }
+        .col-2 {
+            flex: 2;
+        }
+        .col-3 {
+            flex: 3;
+        }
+        .col-4 {
+            flex: 4;
+        }
+        .field {
+            margin-bottom: 2px; /* Reduzi a margem */
+        }
+        label {
+            display: block;
+            font-size: 8px; /* Reduzi o tamanho */
+            margin-bottom: 1px;
+            color: #333;
+        }
+        input[type="text"], input[type="date"], textarea, select {
+            width: 100%;
+            padding: 1px 3px; /* Reduzi o padding */
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 9px; /* Reduzi o tamanho */
+            height: 20px; /* Reduzi a altura */
+        }
+        textarea {
+            resize: none;
+            height: 25px; /* Reduzi a altura padrão */
+            font-size: 9px;
+        }
+        .justificativa textarea {
+            height: 25px;
+        }
+        #sinaisSintomas {
+            height: 60px; /* Reduzi a altura mas mantendo ainda adequada */
+        }
+        .flex-row {
+            display: flex;
+            gap: 3px; /* Reduzi o gap */
+        }
+        .small-input {
+            width: 30px !important; /* Reduzi a largura */
+        }
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Reduzi o gap */
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+        }
+        .radio-option input {
+            margin-right: 2px; /* Reduzi a margem */
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Reduzi o gap */
+            margin-top: 5px; /* Reduzi a margem */
+        }
+        button {
+            padding: 4px 8px; /* Reduzi o padding */
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px; /* Reduzi o tamanho */
+            display: flex;
+            align-items: center;
+            gap: 4px; /* Reduzi o gap */
+        }
+        .print-btn {
+            background-color: #006BA6;
+            color: white;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px; /* Reduzi o gap */
+            margin-top: 2px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 2px; /* Reduzi o gap */
+            font-size: 9px; /* Reduzi o tamanho */
+        }
+        
+        /* Impressão em uma página */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0.3cm; /* Reduzi a margem de impressão */
+            }
+            .button-container {
+                display: none;
+            }
+            body {
+                padding: 0;
+                background-color: white;
+                font-size: 9px; /* Reduzi ainda mais para impressão */
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+            /* Garantir que tudo caiba em uma única página */
+            html, body {
+                width: 100%;
+                height: 100%;
+                overflow: visible; /* Mudei para visible para garantir que tudo seja impresso */
+            }
+            /* Garantir que a seção de autorização seja exibida */
+            .section:last-of-type {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="sus-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <rect x="10" y="10" width="80" height="80" fill="#006BA6" />
+                    <text x="50" y="60" text-anchor="middle" fill="white" font-size="35" font-weight="bold">SUS</text>
+                </svg>
+            </div>
+            <div class="title">
+                LAUDO PARA SOLICITAÇÃO DE AUTORIZAÇÃO<br>
+                DE INTERNAÇÃO HOSPITALAR
+            </div>
+        </div>
+
+        <!-- Identificação do Estabelecimento de Saúde -->
+        <div class="section">
+            <div class="section-title">Identificação do Estabelecimento de Saúde</div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="estabelecimentoSolicitante">1 - NOME DO ESTABELECIMENTO SOLICITANTE</label>
+                        <input type="text" id="estabelecimentoSolicitante" value="HOSPITAL METROPOLITANO DE VARZEA GRANDE">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cnesSolicitante">2 - CNES</label>
+                        <input type="text" id="cnesSolicitante" value="6853781">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="estabelecimentoExecutante">3 - NOME DO ESTABELECIMENTO EXECUTANTE</label>
+                        <input type="text" id="estabelecimentoExecutante" value="HOSPITAL METROPOLITANO DE VARZEA GRANDE">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cnesExecutante">4 - CNES</label>
+                        <input type="text" id="cnesExecutante" value="6853781">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identificação do Paciente -->
+        <div class="section">
+            <div class="section-title">Identificação do Paciente</div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="nomePaciente">5 - NOME DO PACIENTE</label>
+                        <input type="text" id="nomePaciente">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="prontuario">6 - Nº DO PRONTUÁRIO</label>
+                        <input type="text" id="prontuario">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <div class="field">
+                        <label for="cartaoSus">7 - CARTÃO NACIONAL DE SAÚDE (CNS)</label>
+                        <input type="text" id="cartaoSus">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="dataNascimento">8 - DATA DE NASCIMENTO</label>
+                        <input type="date" id="dataNascimento">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="sexo">9 - SEXO</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="sexoMasc" name="sexo" value="1">
+                                <label for="sexoMasc">Masc. 1</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="sexoFem" name="sexo" value="3">
+                                <label for="sexoFem">Fem. 3</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="racaCor">10 - RAÇA/COR</label>
+                        <select id="racaCor">
+                            <option value="">Selecione</option>
+                            <option value="1">Branca</option>
+                            <option value="2">Preta</option>
+                            <option value="3">Parda</option>
+                            <option value="4">Amarela</option>
+                            <option value="5">Indígena</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="nomeMae">11 - NOME DA MÃE</label>
+                        <input type="text" id="nomeMae">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="telefoneContato">12 - TELEFONE DE CONTATO</label>
+                        <div class="flex-row">
+                            <input type="text" placeholder="DDD" class="small-input">
+                            <input type="text" placeholder="Número" style="flex-grow: 1;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="nomeResponsavel">13 - NOME DO RESPONSÁVEL</label>
+                        <input type="text" id="nomeResponsavel">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="telefoneResponsavel">14 - TELEFONE DE CONTATO</label>
+                        <div class="flex-row">
+                            <input type="text" placeholder="DDD" class="small-input">
+                            <input type="text" placeholder="Número" style="flex-grow: 1;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <div class="field">
+                        <label for="endereco">15 - ENDEREÇO (RUA, Nº, BAIRRO)</label>
+                        <input type="text" id="endereco">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <div class="field">
+                        <label for="municipio">16 - MUNICÍPIO DE RESIDÊNCIA</label>
+                        <input type="text" id="municipio">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="codigoIBGE">17 - CÓD. IBGE MUNICÍPIO</label>
+                        <input type="text" id="codigoIBGE">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="uf">18 - UF</label>
+                        <select id="uf">
+                            <option value="">UF</option>
+                            <option value="AC">AC</option>
+                            <option value="AL">AL</option>
+                            <option value="AP">AP</option>
+                            <option value="AM">AM</option>
+                            <option value="BA">BA</option>
+                            <option value="CE">CE</option>
+                            <option value="DF">DF</option>
+                            <option value="ES">ES</option>
+                            <option value="GO">GO</option>
+                            <option value="MA">MA</option>
+                            <option value="MT">MT</option>
+                            <option value="MS">MS</option>
+                            <option value="MG">MG</option>
+                            <option value="PA">PA</option>
+                            <option value="PB">PB</option>
+                            <option value="PR">PR</option>
+                            <option value="PE">PE</option>
+                            <option value="PI">PI</option>
+                            <option value="RJ">RJ</option>
+                            <option value="RN">RN</option>
+                            <option value="RS">RS</option>
+                            <option value="RO">RO</option>
+                            <option value="RR">RR</option>
+                            <option value="SC">SC</option>
+                            <option value="SP">SP</option>
+                            <option value="SE">SE</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cep">19 - CEP</label>
+                        <input type="text" id="cep">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Justificativa da Internação -->
+        <div class="section">
+            <div class="section-title">Justificativa da Internação</div>
+            <div class="field justificativa">
+                <label for="sinaisSintomas">20 - PRINCIPAIS SINAIS E SINTOMAS CLÍNICOS</label>
+                <textarea id="sinaisSintomas">PACIENTE PORTADOR DE OBESIDADE GRAU III, REFRATÁRIO A TRATAMENTO CLÍNICO ASSOCIADO A COMORBIDADE (ESTEATOSE HEPÁTICA, ).</textarea>
+            </div>
+            <div class="field justificativa">
+                <label for="condicoesJustificam">21 - CONDIÇÕES QUE JUSTIFICAM A INTERNAÇÃO</label>
+                <textarea id="condicoesJustificam">NECESSIDADE DE TRATAMENTO CIRÚRGICO PARA OBESIDADE</textarea>
+            </div>
+            <div class="field justificativa">
+                <label for="resultadosExames">22 - PRINCIPAIS RESULTADOS DE PROVAS DIAGNÓSTICAS (RESULTADOS DE EXAMES REALIZADOS)</label>
+                <textarea id="resultadosExames">ANAMNESE + EXAME FÍSICO + EXAMES DE IMAGEM</textarea>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="field">
+                        <label for="diagnosticoInicial">23 - DIAGNÓSTICO INICIAL</label>
+                        <input type="text" id="diagnosticoInicial" value="OBESIDADE">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cid10Principal">24 - CID 10 PRINCIPAL</label>
+                        <input type="text" id="cid10Principal" value="E66-0">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cid10Secundario">25 - CID 10 SECUNDÁRIO</label>
+                        <input type="text" id="cid10Secundario">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cid10Associadas">26 - CID 10 CAUSAS ASSOCIADAS</label>
+                        <input type="text" id="cid10Associadas">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Procedimento Solicitado -->
+        <div class="section">
+            <div class="section-title">Procedimento Solicitado</div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="field">
+                        <label for="procedimentoSolicitado">27 - DESCRIÇÃO DO PROCEDIMENTO SOLICITADO</label>
+                        <input type="text" id="procedimentoSolicitado" value="CIRURGIA BARIÁTRICA POR VIDEOLAPAROSCOPIA">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="codigoProcedimento">28 - CÓDIGO DO PROCEDIMENTO</label>
+                        <input type="text" id="codigoProcedimento" value="0407010386">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="field">
+                        <label for="clinica">29 - CLÍNICA</label>
+                        <select id="clinica">
+                            <option value="">Selecione</option>
+                            <option value="01" selected>Cirúrgica</option>
+                            <option value="02">Obstétrica</option>
+                            <option value="03">Clínica Médica</option>
+                            <option value="04">Pediátrica</option>
+                            <option value="05">Psiquiátrica</option>
+                            <option value="06">Tisiologia</option>
+                            <option value="07">Hospital-Dia</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="caraterInternacao">30 - CARÁTER DA INTERNAÇÃO</label>
+                        <select id="caraterInternacao">
+                            <option value="">Selecione</option>
+                            <option value="1" selected>Eletiva</option>
+                            <option value="2">Urgência</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="field">
+                        <label for="documentoProfissional">31/32 - DOCUMENTO PROFISSIONAL SOLICITANTE</label>
+                        <div class="flex-row">
+                            <div class="radio-option">
+                                <input type="radio" id="profissionalCNS" name="documentoProfissional" value="CNS">
+                                <label for="profissionalCNS">CNS</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="profissionalCPF" name="documentoProfissional" value="CPF">
+                                <label for="profissionalCPF">CPF</label>
+                            </div>
+                            <input type="text" placeholder="Nº Documento" style="flex-grow: 1;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <div class="field">
+                        <label for="nomeProfissional">33 - NOME DO PROFISSIONAL SOLICITANTE/ASSISTENTE</label>
+                        <input type="text" id="nomeProfissional">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="dataSolicitacao">34 - DATA DA SOLICITAÇÃO</label>
+                        <input type="date" id="dataSolicitacao">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="assinaturaCarimbo">35 - ASSINATURA E CARIMBO (Nº DO REGISTRO DO CONSELHO)</label>
+                        <input type="text" id="assinaturaCarimbo">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Causas externas -->
+        <div class="section">
+            <div class="section-title">Preencher em caso de causas externas (acidentes ou violências)</div>
+            <div class="checkbox-group">
+                <div class="checkbox-label">
+                    <input type="checkbox" id="acidenteTransito">
+                    <label for="acidenteTransito">36 - ACIDENTE DE TRÂNSITO</label>
+                </div>
+                <div class="checkbox-label">
+                    <input type="checkbox" id="acidenteTrabalhoTipico">
+                    <label for="acidenteTrabalhoTipico">37 - ACIDENTE TRABALHO TÍPICO</label>
+                </div>
+                <div class="checkbox-label">
+                    <input type="checkbox" id="acidenteTrabalhoTrajeto">
+                    <label for="acidenteTrabalhoTrajeto">38 - ACIDENTE TRABALHO TRAJETO</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="field">
+                        <label for="cnpjSeguradora">39 - CNPJ DA SEGURADORA</label>
+                        <input type="text" id="cnpjSeguradora">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="numeroBilhete">40 - Nº DO BILHETE</label>
+                        <input type="text" id="numeroBilhete">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="serie">41 - SÉRIE</label>
+                        <input type="text" id="serie">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="field">
+                        <label for="cnpjEmpresa">42 - CNPJ EMPRESA</label>
+                        <input type="text" id="cnpjEmpresa">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cnaeEmpresa">43 - CNAE DA EMPRESA</label>
+                        <input type="text" id="cnaeEmpresa">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="cbor">44 - CBOR</label>
+                        <input type="text" id="cbor">
+                    </div>
+                </div>
+            </div>
+            <div class="field">
+                <label for="vinculoPrevidencia">45 - VÍNCULO COM A PREVIDÊNCIA</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-label">
+                        <input type="radio" id="empregado" name="vinculoPrevidencia" value="EMPREGADO">
+                        <label for="empregado">EMPREGADO</label>
+                    </div>
+                    <div class="checkbox-label">
+                        <input type="radio" id="empregador" name="vinculoPrevidencia" value="EMPREGADOR">
+                        <label for="empregador">EMPREGADOR</label>
+                    </div>
+                    <div class="checkbox-label">
+                        <input type="radio" id="autonomo" name="vinculoPrevidencia" value="AUTÔNOMO">
+                        <label for="autonomo">AUTÔNOMO</label>
+                    </div>
+                    <div class="checkbox-label">
+                        <input type="radio" id="desempregado" name="vinculoPrevidencia" value="DESEMPREGADO">
+                        <label for="desempregado">DESEMPREGADO</label>
+                    </div>
+                    <div class="checkbox-label">
+                        <input type="radio" id="aposentado" name="vinculoPrevidencia" value="APOSENTADO">
+                        <label for="aposentado">APOSENTADO</label>
+                    </div>
+                    <div class="checkbox-label">
+                        <input type="radio" id="naoSegurado" name="vinculoPrevidencia" value="NÃO SEGURADO">
+                        <label for="naoSegurado">NÃO SEGURADO</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Autorização -->
+        <div class="section">
+            <div class="section-title">Autorização</div>
+            <div class="row">
+                <div class="col-2">
+                    <div class="field">
+                        <label for="nomeProfissionalAutorizador">46 - NOME DO PROFISSIONAL AUTORIZADOR</label>
+                        <input type="text" id="nomeProfissionalAutorizador">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="codOrgaoEmissor">47 - CÓD. ÓRGÃO EMISSOR</label>
+                        <input type="text" id="codOrgaoEmissor">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="numeroAIH">52 - Nº DA AUTORIZAÇÃO DE INTERNAÇÃO HOSPITALAR</label>
+                        <input type="text" id="numeroAIH">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <div class="field">
+                        <label for="documentoAutorizador">48/49 - DOCUMENTO PROFISSIONAL AUTORIZADOR</label>
+                        <div class="flex-row">
+                            <div class="radio-option">
+                                <input type="radio" id="autorizadorCNS" name="documentoAutorizador" value="CNS">
+                                <label for="autorizadorCNS">CNS</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="autorizadorCPF" name="documentoAutorizador" value="CPF">
+                                <label for="autorizadorCPF">CPF</label>
+                            </div>
+                            <input type="text" placeholder="Nº Documento" style="flex-grow: 1;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="dataAutorizacao">50 - DATA DA AUTORIZAÇÃO</label>
+                        <input type="date" id="dataAutorizacao">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="field">
+                        <label for="assinaturaCarimboAutorizador">51 - ASSINATURA E CARIMBO (Nº DO REGISTRO DO CONSELHO)</label>
+                        <input type="text" id="assinaturaCarimboAutorizador">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="button-container">
+            <button type="button" class="print-btn" onclick="window.print()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Imprimir Formulário
+            </button>
+            <button type="button" class="clear-btn" onclick="document.getElementById('aih-form').reset()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                Limpar Formulário
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Função para definir a data atual no campo de data da solicitação
+        window.onload = function() {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            
+            document.getElementById('dataSolicitacao').value = `${ano}-${mes}-${dia}`;
+        }
+        
+        // Função para limpar o formulário
+        function limparFormulario() {
+            // Manter os campos que devem ser pré-preenchidos
+            const camposPrePreenchidos = {
+                "estabelecimentoSolicitante": "HOSPITAL METROPOLITANO DE VARZEA GRANDE",
+                "cnesSolicitante": "6853781",
+                "estabelecimentoExecutante": "HOSPITAL METROPOLITANO DE VARZEA GRANDE",
+                "cnesExecutante": "6853781",
+                "sinaisSintomas": "PACIENTE PORTADOR DE OBESIDADE GRAU III, REFRATÁRIO A TRATAMENTO CLÍNICO ASSOCIADO A COMORBIDADE (ESTEATOSE HEPÁTICA, ).",
+                "condicoesJustificam": "NECESSIDADE DE TRATAMENTO CIRÚRGICO PARA OBESIDADE",
+                "resultadosExames": "ANAMNESE + EXAME FÍSICO + EXAMES DE IMAGEM",
+                "diagnosticoInicial": "OBESIDADE",
+                "cid10Principal": "E66-0",
+                "procedimentoSolicitado": "CIRURGIA BARIÁTRICA POR VIDEOLAPAROSCOPIA",
+                "codigoProcedimento": "0407010386"
+            };
+            
+            // Limpar todos os campos exceto os pré-preenchidos
+            document.querySelectorAll('input').forEach(input => {
+                if (input.type === 'text' && !camposPrePreenchidos[input.id]) {
+                    input.value = '';
+                } else if (input.type === 'date' && input.id !== 'dataSolicitacao') {
+                    input.value = '';
+                } else if (input.type === 'radio' || input.type === 'checkbox') {
+                    input.checked = false;
+                }
+            });
+            
+            document.querySelectorAll('textarea').forEach(textarea => {
+                if (!camposPrePreenchidos[textarea.id]) {
+                    textarea.value = '';
+                }
+            });
+            
+            document.querySelectorAll('select').forEach(select => {
+                if (select.id === 'clinica') {
+                    select.value = '01'; // Manter Cirúrgica selecionado
+                } else if (select.id === 'caraterInternacao') {
+                    select.value = '1'; // Manter Eletiva selecionado
+                } else {
+                    select.selectedIndex = 0;
+                }
+            });
+            
+            // Redefinir a data atual para o campo dataSolicitacao
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            document.getElementById('dataSolicitacao').value = `${ano}-${mes}-${dia}`;
+        }
+
+        // Associar a função ao botão de limpar
+        document.querySelector('.clear-btn').addEventListener('click', limparFormulario);
+    </script>
+</body>
+</html>

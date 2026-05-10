@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema AIH - Hospital Metropolitano</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .azul-padrao { color: #006BA6; }
+        .bg-azul-padrao { background-color: #006BA6; }
+        .border-azul-padrao { border-color: #006BA6; }
+        .hover-bg-azul-padrao:hover { background-color: #005a8a; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+            header, nav, .tab-btn, .modal, .no-print { display: none !important; }
+        }
+        
+        .form-aih {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 12px;
+        }
+        
+        .form-aih input, .form-aih select, .form-aih textarea {
+            border: 1px solid #006BA6;
+            padding: 2px;
+            font-size: 11px;
+        }
+        
+        .form-aih label {
+            font-weight: bold;
+            margin-bottom: 2px;
+            display: block;
+        }
+        
+        .campo-numerado {
+            margin-bottom: 8px;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+            font-size: 11px;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Fixo -->
+    <header class="bg-azul-padrao text-white shadow-lg no-print">
+        <div class="container mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold">🏥 Sistema AIH - Hospital Metropolitano de Várzea Grande</h1>
+        </div>
+    </header>
+
+    <!-- Navegação por Abas -->
+    <nav class="bg-white shadow-md no-print">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-1">
+                <button onclick="showTab('emissao')" class="tab-btn px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600">📋 Emissão de AIH</button>
+                <button onclick="showTab('dashboard')" class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">📊 Dashboard de AIH</button>
+                <button onclick="showTab('comparativo')" class="tab-btn px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-600 transition">🔍 Comparativo AIH × Cirurgias</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- ABA 1 - Emissão de AIH -->
+        <div id="emissaoTab" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold azul-padrao">Formulário de AIH</h2>
+                    <div class="space-x-2">
+                        <button onclick="abrirModalEdicao()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition text-sm">
+                            ✏️ Editar Registro AIH
+                        </button>
+                        <button onclick="limparFormulario()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                            🗑️ Limpar Formulário
+                        </button>
+                        <button onclick="validarEImprimir()" class="bg-azul-padrao text-white px-6 py-2 rounded hover-bg-azul-padrao transition font-medium">
+                            🖨️ Imprimir Formulário
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="printArea" style="margin: 0; padding: 0; background: white;">
+                    <style>
+                        * {
+                            box-sizing: border-box;
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .container {
+                            background-color: white;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            padding: 5px;
+                            margin: 0 auto;
+                            max-width: 1000px;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                        }
+                        .header {
+                            display: flex;
+                            align-items: center;
+                            margin-bottom: 5px;
+                            padding-bottom: 5px;
+                            border-bottom: 1px solid #006BA6;
+                        }
+                        .sus-logo {
+                            width: 30px;
+                            height: 30px;
+                            margin-right: 10px;
+                        }
+                        .title {
+                            flex-grow: 1;
+                            text-align: center;
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: #006BA6;
+                        }
+                        .section {
+                            border: 1px solid #ccc;
+                            border-radius: 3px;
+                            padding: 3px;
+                            margin-bottom: 3px;
+                        }
+                        .section-title {
+                            font-weight: bold;
+                            margin-bottom: 3px;
+                            color: #006BA6;
+                            border-bottom: 1px solid #eee;
+                            padding-bottom: 2px;
+                            font-size: 10px;
+                        }
+                        .row {
+                            display: flex;
+                            flex-wrap: wrap;
+                            margin-bottom: 3px;
+                        }
+                        .col {
+                            flex: 1;
+                            min-width: 150px;
+                            padding: 0 2px;
+                        }
+                        .col-2 {
+                            flex: 2;
+                        }
+                        .col-3 {
+                            flex: 3;
+                        }
+                        .col-4 {
+                            flex: 4;
+                        }
+                        .field {
+                            margin-bottom: 2px;
+                        }
+                        label {
+                            display: block;
+                            font-size: 8px;
+                            margin-bottom: 1px;
+                            color: #333;
+                        }
+                        input[type="text"], input[type="date"], textarea, select {
+                            width: 100%;
+                            padding: 1px 3px;
+                            border: 1px solid #ccc;
+                            border-radius: 3px;
+                            font-size: 9px;
+                            height: 20px;
+                        }
+                        textarea {
+                            resize: none;
+                            height: 25px;
+                            font-size: 9px;
+                        }
+                        .justificativa textarea {
+                            height: 25px;
+                        }
+                        #sinaisSintomas {
+                            height: 60px;
+                        }
+                        .flex-row {
+                            display: flex;
+                            gap: 3px;
+                        }
+                        .small-input {
+                            width: 30px !important;
+                        }
+                        .radio-group {
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        }
+                        .radio-option {
+                            display: flex;
+                            align-items: center;
+                        }
+                        .radio-option input {
+                            margin-right: 2px;
+                        }
+                        .checkbox-group {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 5px;
+                            margin-top: 2px;
+                        }
+                        .checkbox-label {
+                            display: flex;
+                            align-items: center;
+                            gap: 2px;
+                            font-size: 9px;
+                        }
+                        
+                        @media print {
+                            @page {
+                                size: A4 portrait;
+                                margin: 0.3cm;
+                            }
+                            .button-container {
+                                display: none;
+                            }
+                            body {
+                                padding: 0;
+                                background-color: white;
+                                font-size: 9px;
+                            }
+                            .container {
+                                box-shadow: none;
+                                border: none;
+                                padding: 0;
+                            }
+                            html, body {
+                                width: 100%;
+                                height: 100%;
+                                overflow: visible;
+                            }
+                            .section:last-of-type {
+                                page-break-inside: avoid;
+                            }
+                        }
+                    </style>
+                    
+                    <div class="container">
+                        <div class="header">
+                            <div class="sus-logo">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                                    <rect x="10" y="10" width="80" height="80" fill="#006BA6" />
+                                    <text x="50" y="60" text-anchor="middle" fill="white" font-size="35" font-weight="bold">SUS</text>
+                                </svg>
+                            </div>
+                            <div class="title">
+                                LAUDO PARA SOLICITAÇÃO DE AUTORIZAÇÃO<br>
+                                DE INTERNAÇÃO HOSPITALAR
+                            </div>
+                        </div>
+
+                        <!-- Identificação do Estabelecimento de Saúde -->
+                        <div class="section">
+                            <div class="section-title">Identificação do Estabelecimento de Saúde</div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="estabelecimentoSolicitante">1 - NOME DO ESTABELECIMENTO SOLICITANTE</label>
+                                        <input type="text" id="estabelecimentoSolicitante" value="HOSPITAL METROPOLITANO DE VARZEA GRANDE">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cnesSolicitante">2 - CNES</label>
+                                        <input type="text" id="cnesSolicitante" value="6853781">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="estabelecimentoExecutante">3 - NOME DO ESTABELECIMENTO EXECUTANTE</label>
+                                        <input type="text" id="estabelecimentoExecutante" value="HOSPITAL METROPOLITANO DE VARZEA GRANDE">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cnesExecutante">4 - CNES</label>
+                                        <input type="text" id="cnesExecutante" value="6853781">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Identificação do Paciente -->
+                        <div class="section">
+                            <div class="section-title">Identificação do Paciente</div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="nomePaciente">5 - NOME DO PACIENTE</label>
+                                        <input type="text" id="nomePaciente">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="prontuario">6 - Nº DO PRONTUÁRIO</label>
+                                        <input type="text" id="prontuario">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="cartaoSus">7 - CARTÃO NACIONAL DE SAÚDE (CNS)</label>
+                                        <input type="text" id="cartaoSus">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="dataNascimento">8 - DATA DE NASCIMENTO</label>
+                                        <input type="date" id="dataNascimento">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="sexo">9 - SEXO</label>
+                                        <div class="radio-group">
+                                            <div class="radio-option">
+                                                <input type="radio" id="sexoMasc" name="sexo" value="1">
+                                                <label for="sexoMasc">Masc. 1</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input type="radio" id="sexoFem" name="sexo" value="3">
+                                                <label for="sexoFem">Fem. 3</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="racaCor">10 - RAÇA/COR</label>
+                                        <select id="racaCor">
+                                            <option value="">Selecione</option>
+                                            <option value="1">Branca</option>
+                                            <option value="2">Preta</option>
+                                            <option value="3">Parda</option>
+                                            <option value="4">Amarela</option>
+                                            <option value="5">Indígena</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="nomeMae">11 - NOME DA MÃE</label>
+                                        <input type="text" id="nomeMae">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="telefoneContato">12 - TELEFONE DE CONTATO</label>
+                                        <div class="flex-row">
+                                            <input type="text" placeholder="DDD" class="small-input">
+                                            <input type="text" placeholder="Número" style="flex-grow: 1;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="nomeResponsavel">13 - NOME DO RESPONSÁVEL</label>
+                                        <input type="text" id="nomeResponsavel">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="telefoneResponsavel">14 - TELEFONE DE CONTATO</label>
+                                        <div class="flex-row">
+                                            <input type="text" placeholder="DDD" class="small-input">
+                                            <input type="text" placeholder="Número" style="flex-grow: 1;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="field">
+                                        <label for="endereco">15 - ENDEREÇO (RUA, Nº, BAIRRO)</label>
+                                        <input type="text" id="endereco">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="municipio">16 - MUNICÍPIO DE RESIDÊNCIA</label>
+                                        <input type="text" id="municipio">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="codigoIBGE">17 - CÓD. IBGE MUNICÍPIO</label>
+                                        <input type="text" id="codigoIBGE">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="uf">18 - UF</label>
+                                        <select id="uf">
+                                            <option value="">UF</option>
+                                            <option value="AC">AC</option>
+                                            <option value="AL">AL</option>
+                                            <option value="AP">AP</option>
+                                            <option value="AM">AM</option>
+                                            <option value="BA">BA</option>
+                                            <option value="CE">CE</option>
+                                            <option value="DF">DF</option>
+                                            <option value="ES">ES</option>
+                                            <option value="GO">GO</option>
+                                            <option value="MA">MA</option>
+                                            <option value="MT">MT</option>
+                                            <option value="MS">MS</option>
+                                            <option value="MG">MG</option>
+                                            <option value="PA">PA</option>
+                                            <option value="PB">PB</option>
+                                            <option value="PR">PR</option>
+                                            <option value="PE">PE</option>
+                                            <option value="PI">PI</option>
+                                            <option value="RJ">RJ</option>
+                                            <option value="RN">RN</option>
+                                            <option value="RS">RS</option>
+                                            <option value="RO">RO</option>
+                                            <option value="RR">RR</option>
+                                            <option value="SC">SC</option>
+                                            <option value="SP">SP</option>
+                                            <option value="SE">SE</option>
+                                            <option value="TO">TO</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cep">19 - CEP</label>
+                                        <input type="text" id="cep">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Justificativa da Internação -->
+                        <div class="section">
+                            <div class="section-title">Justificativa da Internação</div>
+                            <div class="field justificativa">
+                                <label for="sinaisSintomas">20 - PRINCIPAIS SINAIS E SINTOMAS CLÍNICOS</label>
+                                <textarea id="sinaisSintomas">PACIENTE PORTADOR DE OBESIDADE GRAU III, REFRATÁRIO A TRATAMENTO CLÍNICO ASSOCIADO A COMORBIDADE (ESTEATOSE HEPÁTICA, ).</textarea>
+                            </div>
+                            <div class="field justificativa">
+                                <label for="condicoesJustificam">21 - CONDIÇÕES QUE JUSTIFICAM A INTERNAÇÃO</label>
+                                <textarea id="condicoesJustificam">NECESSIDADE DE TRATAMENTO CIRÚRGICO PARA OBESIDADE</textarea>
+                            </div>
+                            <div class="field justificativa">
+                                <label for="resultadosExames">22 - PRINCIPAIS RESULTADOS DE PROVAS DIAGNÓSTICAS (RESULTADOS DE EXAMES REALIZADOS)</label>
+                                <textarea id="resultadosExames">ANAMNESE + EXAME FÍSICO + EXAMES DE IMAGEM</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="diagnosticoInicial">23 - DIAGNÓSTICO INICIAL</label>
+                                        <input type="text" id="diagnosticoInicial" value="OBESIDADE">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cid10Principal">24 - CID 10 PRINCIPAL</label>
+                                        <input type="text" id="cid10Principal" value="E66-0">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cid10Secundario">25 - CID 10 SECUNDÁRIO</label>
+                                        <input type="text" id="cid10Secundario">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cid10Associadas">26 - CID 10 CAUSAS ASSOCIADAS</label>
+                                        <input type="text" id="cid10Associadas">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Procedimento Solicitado -->
+                        <div class="section">
+                            <div class="section-title">Procedimento Solicitado</div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="field">
+                                        <label for="procedimentoSolicitado">27 - DESCRIÇÃO DO PROCEDIMENTO SOLICITADO</label>
+                                        <input type="text" id="procedimentoSolicitado" value="CIRURGIA BARIÁTRICA POR VIDEOLAPAROSCOPIA">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="codigoProcedimento">28 - CÓDIGO DO PROCEDIMENTO</label>
+                                        <input type="text" id="codigoProcedimento" value="0407010386">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="clinica">29 - CLÍNICA</label>
+                                        <select id="clinica">
+                                            <option value="">Selecione</option>
+                                            <option value="01" selected>Cirúrgica</option>
+                                            <option value="02">Obstétrica</option>
+                                            <option value="03">Clínica Médica</option>
+                                            <option value="04">Pediátrica</option>
+                                            <option value="05">Psiquiátrica</option>
+                                            <option value="06">Tisiologia</option>
+                                            <option value="07">Hospital-Dia</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="caraterInternacao">30 - CARÁTER DA INTERNAÇÃO</label>
+                                        <select id="caraterInternacao">
+                                            <option value="">Selecione</option>
+                                            <option value="1" selected>Eletiva</option>
+                                            <option value="2">Urgência</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="documentoProfissional">31/32 - DOCUMENTO PROFISSIONAL SOLICITANTE</label>
+                                        <div class="flex-row">
+                                            <div class="radio-option">
+                                                <input type="radio" id="profissionalCNS" name="documentoProfissional" value="CNS">
+                                                <label for="profissionalCNS">CNS</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input type="radio" id="profissionalCPF" name="documentoProfissional" value="CPF">
+                                                <label for="profissionalCPF">CPF</label>
+                                            </div>
+                                            <input type="text" placeholder="Nº Documento" style="flex-grow: 1;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="nomeProfissional">33 - NOME DO PROFISSIONAL SOLICITANTE/ASSISTENTE</label>
+                                        <input type="text" id="nomeProfissional">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="dataSolicitacao">34 - DATA DA SOLICITAÇÃO</label>
+                                        <input type="date" id="dataSolicitacao">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="assinaturaCarimbo">35 - ASSINATURA E CARIMBO (Nº DO REGISTRO DO CONSELHO)</label>
+                                        <input type="text" id="assinaturaCarimbo">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Causas externas -->
+                        <div class="section">
+                            <div class="section-title">Preencher em caso de causas externas (acidentes ou violências)</div>
+                            <div class="checkbox-group">
+                                <div class="checkbox-label">
+                                    <input type="checkbox" id="acidenteTransito">
+                                    <label for="acidenteTransito">36 - ACIDENTE DE TRÂNSITO</label>
+                                </div>
+                                <div class="checkbox-label">
+                                    <input type="checkbox" id="acidenteTrabalhoTipico">
+                                    <label for="acidenteTrabalhoTipico">37 - ACIDENTE TRABALHO TÍPICO</label>
+                                </div>
+                                <div class="checkbox-label">
+                                    <input type="checkbox" id="acidenteTrabalhoTrajeto">
+                                    <label for="acidenteTrabalhoTrajeto">38 - ACIDENTE TRABALHO TRAJETO</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cnpjSeguradora">39 - CNPJ DA SEGURADORA</label>
+                                        <input type="text" id="cnpjSeguradora">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="numeroBilhete">40 - Nº DO BILHETE</label>
+                                        <input type="text" id="numeroBilhete">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="serie">41 - SÉRIE</label>
+                                        <input type="text" id="serie">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cnpjEmpresa">42 - CNPJ EMPRESA</label>
+                                        <input type="text" id="cnpjEmpresa">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cnaeEmpresa">43 - CNAE DA EMPRESA</label>
+                                        <input type="text" id="cnaeEmpresa">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="cbor">44 - CBOR</label>
+                                        <input type="text" id="cbor">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="vinculoPrevidencia">45 - VÍNCULO COM A PREVIDÊNCIA</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="empregado" name="vinculoPrevidencia" value="EMPREGADO">
+                                        <label for="empregado">EMPREGADO</label>
+                                    </div>
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="empregador" name="vinculoPrevidencia" value="EMPREGADOR">
+                                        <label for="empregador">EMPREGADOR</label>
+                                    </div>
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="autonomo" name="vinculoPrevidencia" value="AUTÔNOMO">
+                                        <label for="autonomo">AUTÔNOMO</label>
+                                    </div>
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="desempregado" name="vinculoPrevidencia" value="DESEMPREGADO">
+                                        <label for="desempregado">DESEMPREGADO</label>
+                                    </div>
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="aposentado" name="vinculoPrevidencia" value="APOSENTADO">
+                                        <label for="aposentado">APOSENTADO</label>
+                                    </div>
+                                    <div class="checkbox-label">
+                                        <input type="radio" id="naoSegurado" name="vinculoPrevidencia" value="NÃO SEGURADO">
+                                        <label for="naoSegurado">NÃO SEGURADO</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Autorização -->
+                        <div class="section">
+                            <div class="section-title">Autorização</div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="nomeProfissionalAutorizador">46 - NOME DO PROFISSIONAL AUTORIZADOR</label>
+                                        <input type="text" id="nomeProfissionalAutorizador">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="codOrgaoEmissor">47 - CÓD. ÓRGÃO EMISSOR</label>
+                                        <input type="text" id="codOrgaoEmissor">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="numeroAIH">52 - Nº DA AUTORIZAÇÃO DE INTERNAÇÃO HOSPITALAR</label>
+                                        <input type="text" id="numeroAIH">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="field">
+                                        <label for="documentoAutorizador">48/49 - DOCUMENTO PROFISSIONAL AUTORIZADOR</label>
+                                        <div class="flex-row">
+                                            <div class="radio-option">
+                                                <input type="radio" id="autorizadorCNS" name="documentoAutorizador" value="CNS">
+                                                <label for="autorizadorCNS">CNS</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input type="radio" id="autorizadorCPF" name="documentoAutorizador" value="CPF">
+                                                <label for="autorizadorCPF">CPF</label>
+                                            </div>
+                                            <input type="text" placeholder="Nº Documento" style="flex-grow: 1;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="dataAutorizacao">50 - DATA DA AUTORIZAÇÃO</label>
+                                        <input type="date" id="dataAutorizacao">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="field">
+                                        <label for="assinaturaCarimboAutorizador">51 - ASSINATURA E CARIMBO (Nº DO REGISTRO DO CONSELHO)</label>
+                                        <input type="text" id="assinaturaCarimboAutorizador">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 2 - Dashboard de AIH -->
+        <div id="dashboardTab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4 azul-padrao">Filtros</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <button onclick="filtrarDashboard('semana')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">📅 Esta Semana</button>
+                    <button onclick="filtrarDashboard('mes')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">📆 Este Mês</button>
+                    <button onclick="filtrarDashboard('total')" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition">📊 Total</button>
+                </div>
+                
+                <div class="flex items-center gap-4 mb-6">
+                    <label class="font-medium">Filtrar por Profissional:</label>
+                    <select id="filtroProfissional" onchange="filtrarPorProfissional()" class="border border-gray-300 rounded px-3 py-2">
+                        <option value="">Todos os profissionais</option>
+                    </select>
+                    <button onclick="limparFiltroProfissional()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">Limpar filtro</button>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">AIH emitidas este mês</h3>
+                    <p id="aihMes" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">AIH emitidas esta semana</h3>
+                    <p id="aihSemana" class="text-3xl font-bold text-green-600 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">Total de AIH emitidas</h3>
+                    <p id="aihTotal" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+                </div>
+            </div>
+
+            <!-- Tabela de Registros -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold azul-padrao">Registros de AIH</h3>
+                    <div class="relative">
+                        <button onclick="toggleDownloadMenu()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex items-center gap-2">
+                            📥 Download
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <button onclick="downloadPDF()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                                📄 Download PDF
+                            </button>
+                            <button onclick="downloadExcel()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                                📊 Download Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-gray-700">Nº</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Data Emissão</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Paciente</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Médico</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Dados Clínicos</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAih"></tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                <div class="flex justify-between items-center mt-4">
+                    <button onclick="paginaAnterior()" id="btnAnterior" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition disabled:opacity-50" disabled>Anterior</button>
+                    <span id="paginacaoInfo" class="text-gray-600">Página 1 de 1</span>
+                    <button onclick="proximaPagina()" id="btnProxima" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition disabled:opacity-50" disabled>Próxima</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 3 - Comparativo AIH × Cirurgias -->
+        <div id="comparativoTab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4 azul-padrao">Filtros do Comparativo</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Mês:</label>
+                        <select id="filtroMes" onchange="atualizarComparativo()" class="border border-gray-300 rounded px-3 py-2 w-full">
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Ano:</label>
+                        <select id="filtroAno" onchange="atualizarComparativo()" class="border border-gray-300 rounded px-3 py-2 w-full">
+                            <!-- Preenchido dinamicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Status:</label>
+                        <select id="filtroStatus" onchange="atualizarComparativo()" class="border border-gray-300 rounded px-3 py-2 w-full">
+                            <option value="todos">Todos</option>
+                            <option value="operados">Operados</option>
+                            <option value="pendentes">Pendentes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas do Comparativo -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">AIH emitidas no período</h3>
+                    <p id="aihPeriodo" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">Cirurgias realizadas no período</h3>
+                    <p id="cirurgiasPeriodo" class="text-3xl font-bold text-green-600 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">AIH com cirurgia confirmada</h3>
+                    <p id="aihConfirmadas" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-600 text-sm font-medium">AIH pendentes</h3>
+                    <p id="aihPendentes" class="text-3xl font-bold text-orange-600 mt-2">0</p>
+                </div>
+            </div>
+
+            <!-- Tabela Comparativa -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4 azul-padrao">Comparativo AIH × Cirurgias</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-gray-700">Paciente (AIH)</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Data AIH</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Médico AIH</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Status</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Data Cirurgia</th>
+                                <th class="px-4 py-2 text-left text-gray-700">Cirurgião</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaComparativo"></tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação do Comparativo -->
+                <div class="flex justify-between items-center mt-4">
+                    <button onclick="paginaAnteriorComp()" id="btnAnteriorComp" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition disabled:opacity-50" disabled>Anterior</button>
+                    <span id="paginacaoInfoComp" class="text-gray-600">Página 1 de 1</span>
+                    <button onclick="proximaPaginaComp()" id="btnProximaComp" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition disabled:opacity-50" disabled>Próxima</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmação de Impressão -->
+    <div id="modalConfirmacao" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold mb-4 azul-padrao">Confirmar Dados da AIH</h3>
+            <div class="space-y-3 mb-6">
+                <div><strong>Nome do paciente:</strong> <span id="confirmPaciente"></span></div>
+                <div><strong>Dados clínicos:</strong> <div id="confirmDadosClinicos" class="text-sm text-gray-600 mt-1"></div></div>
+                <div><strong>Nome do médico:</strong> <span id="confirmMedico"></span></div>
+                <div><strong>Data de emissão:</strong> <span id="confirmData"></span></div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="confirmarEImprimir()" class="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Confirmar e Imprimir</button>
+                <button onclick="fecharModalConfirmacao()" class="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600 transition">Cancelar</button>
+            </div>
+            <div id="erroModal" class="hidden mt-3 p-3 bg-red-100 text-red-700 rounded"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de AIH -->
+    <div id="modalEdicao" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4 azul-padrao">Buscar e Editar Registro AIH</h3>
+            
+            <!-- Área de Busca -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Buscar por nome do paciente:</label>
+                    <input type="text" id="buscaPaciente" class="border border-gray-300 rounded px-3 py-2 w-full">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">Data (opcional):</label>
+                    <input type="date" id="buscaData" class="border border-gray-300 rounded px-3 py-2 w-full">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="buscarRegistros()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buscar</button>
+                </div>
+            </div>
+            
+            <!-- Resultados da Busca -->
+            <div id="resultadosBusca" class="mb-4"></div>
+            
+            <!-- Formulário de Edição -->
+            <div id="formEdicao" class="hidden">
+                <h4 class="text-lg font-bold mb-3 azul-padrao">Editar Registro</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Nome do Paciente:</label>
+                        <input type="text" id="editNomePaciente" class="border border-gray-300 rounded px-3 py-2 w-full">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Dados Clínicos:</label>
+                        <textarea id="editDadosClinicos" rows="4" class="border border-gray-300 rounded px-3 py-2 w-full"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Nome do Médico:</label>
+                        <input type="text" id="editNomeMedico" class="border border-gray-300 rounded px-3 py-2 w-full">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="salvarAlteracao()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Salvar Alteração</button>
+                        <button onclick="fecharModalEdicao()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="erroEdicao" class="hidden mt-3 p-3 bg-red-100 text-red-700 rounded"></div>
+        </div>
+    </div>
+
+    <!-- Toast de Notificações -->
+    <div id="toast" class="hidden fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    <script>
+        // Configuração do Supabase
+        const SUPABASE_URL = 'https://knylwzxpatuhaegxddak.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtueWx3enhwYXR1aGFlZ3hkZGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTQ1MzAsImV4cCI6MjA3NTI3MDUzMH0.VyExUmy-7BYzsp1Cwv22WZwruT5vJYEhmL5_SnLz7Pk';
+        
+        let db, allAih = [], filteredAih = [], paginaAtual = 1, paginaAtualComp = 1;
+        let filtroProfissionalAtual = '';
+        let filtroPeriodoAtual = 'total';
+        let registroEditando = null;
+        
+        // Inicializar Supabase
+        try {
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase conectado');
+            
+            // Verificar se a tabela existe
+            verificarTabela();
+        } catch (e) {
+            console.error('❌ Erro ao conectar Supabase:', e);
+            showToast('Erro de conexão com o banco de dados', 'error');
+        }
+        
+        async function verificarTabela() {
+            try {
+                const { data, error } = await db.from('aih_registros').select('id').limit(1);
+                if (error) {
+                    console.error('❌ Tabela aih_registros não encontrada:', error);
+                    showToast('Erro: Tabela aih_registros não existe. Execute o SQL fornecido no Supabase.', 'error');
+                    return false;
+                }
+                console.log('✅ Tabela aih_registros verificada');
+                return true;
+            } catch (e) {
+                console.error('❌ Erro ao verificar tabela:', e);
+                showToast('Erro ao verificar estrutura do banco de dados', 'error');
+                return false;
+            }
+        }
+        
+        // Inicialização
+        window.addEventListener('DOMContentLoaded', () => {
+            preencherDataAtual();
+            preencherAnos();
+            carregarDadosAba('emissao');
+            carregarProfissionais();
+        });
+        
+        // Funções de Navegação
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-blue-600');
+                btn.classList.add('text-gray-600', 'border-transparent');
+            });
+            event.target.classList.add('text-blue-600', 'border-blue-600');
+            
+            carregarDadosAba(tabName);
+        }
+        
+        // Funções da Aba Emissão
+        function preencherDataAtual() {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataSolicitacao').value = hoje;
+        }
+        
+        function limparFormulario() {
+            // Campos que devem ser preservados (exatamente como no original)
+            const camposPreservar = {
+                'estabelecimentoSolicitante': 'HOSPITAL METROPOLITANO DE VARZEA GRANDE',
+                'cnesSolicitante': '6853781',
+                'estabelecimentoExecutante': 'HOSPITAL METROPOLITANO DE VARZEA GRANDE',
+                'cnesExecutante': '6853781',
+                'sinaisSintomas': 'PACIENTE PORTADOR DE OBESIDADE GRAU III, REFRATÁRIO A TRATAMENTO CLÍNICO ASSOCIADO A COMORBIDADE (ESTEATOSE HEPÁTICA, ).',
+                'condicoesJustificam': 'NECESSIDADE DE TRATAMENTO CIRÚRGICO PARA OBESIDADE',
+                'resultadosExames': 'ANAMNESE + EXAME FÍSICO + EXAMES DE IMAGEM',
+                'diagnosticoInicial': 'OBESIDADE',
+                'cid10Principal': 'E66-0',
+                'procedimentoSolicitado': 'CIRURGIA BARIÁTRICA POR VIDEOLAPAROSCOPIA',
+                'codigoProcedimento': '0407010386',
+                'clinica': '01',
+                'caraterInternacao': '1'
+            };
+            
+            // Limpar todos os campos exceto os pré-preenchidos
+            document.querySelectorAll('input').forEach(input => {
+                if (input.type === 'text' && !camposPreservar[input.id]) {
+                    input.value = '';
+                } else if (input.type === 'date' && input.id !== 'dataSolicitacao') {
+                    input.value = '';
+                } else if (input.type === 'radio' || input.type === 'checkbox') {
+                    input.checked = false;
+                }
+            });
+            
+            document.querySelectorAll('textarea').forEach(textarea => {
+                if (!camposPreservar[textarea.id]) {
+                    textarea.value = '';
+                }
+            });
+            
+            document.querySelectorAll('select').forEach(select => {
+                if (select.id === 'clinica') {
+                    select.value = '01'; // Manter Cirúrgica selecionado
+                } else if (select.id === 'caraterInternacao') {
+                    select.value = '1'; // Manter Eletiva selecionado
+                } else {
+                    select.selectedIndex = 0;
+                }
+            });
+            
+            // Redefinir a data atual para o campo dataSolicitacao
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            document.getElementById('dataSolicitacao').value = `${ano}-${mes}-${dia}`;
+        }
+        
+        function validarEImprimir() {
+            const nomePaciente = document.getElementById('nomePaciente').value.trim();
+            const nomeProfissional = document.getElementById('nomeProfissional').value.trim();
+            
+            if (!nomePaciente || !nomeProfissional) {
+                alert('Preencha o nome do paciente (campo 5) e o nome do médico solicitante (campo 33) antes de imprimir.');
+                return;
+            }
+            
+            // Preencher modal de confirmação
+            document.getElementById('confirmPaciente').textContent = nomePaciente;
+            document.getElementById('confirmDadosClinicos').textContent = document.getElementById('sinaisSintomas').value;
+            document.getElementById('confirmMedico').textContent = nomeProfissional;
+            document.getElementById('confirmData').textContent = formatarData(new Date());
+            
+            // Abrir modal
+            document.getElementById('modalConfirmacao').classList.remove('hidden');
+        }
+        
+        async function confirmarEImprimir() {
+            const nomePaciente = document.getElementById('nomePaciente').value.trim();
+            const dadosClinicos = document.getElementById('sinaisSintomas').value.trim();
+            const nomeMedico = document.getElementById('nomeProfissional').value.trim();
+            const dataEmissao = new Date().toISOString().split('T')[0];
+            
+            // Validações adicionais
+            if (!nomePaciente || !nomeMedico) {
+                document.getElementById('erroModal').textContent = 'Preencha todos os campos obrigatórios!';
+                document.getElementById('erroModal').classList.remove('hidden');
+                return;
+            }
+            
+            if (!db) {
+                document.getElementById('erroModal').textContent = 'Erro: Conexão com banco de dados não estabelecida!';
+                document.getElementById('erroModal').classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                console.log('Enviando dados:', { nomePaciente, dadosClinicos, nomeMedico, dataEmissao });
+                
+                const { data, error } = await db.from('aih_registros').insert([{
+                    nome_paciente: nomePaciente,
+                    dados_clinicos: dadosClinicos,
+                    nome_medico: nomeMedico,
+                    data_emissao: dataEmissao
+                }]);
+                
+                console.log('Resposta Supabase:', { data, error });
+                
+                if (error) {
+                    console.error('Erro do Supabase:', error);
+                    throw error;
+                }
+                
+                // Verificar se data não é nulo antes de acessar
+                if (data && data.length > 0) {
+                    showToast(`AIH registrada com sucesso! ID: ${data[0].id}`, 'success');
+                } else {
+                    showToast('AIH registrada com sucesso!', 'success');
+                }
+                
+                fecharModalConfirmacao();
+                window.print();
+                
+            } catch (error) {
+                console.error('Erro ao salvar AIH:', error);
+                document.getElementById('erroModal').textContent = 'Erro ao salvar no banco: ' + error.message;
+                document.getElementById('erroModal').classList.remove('hidden');
+            }
+        }
+        
+        function fecharModalConfirmacao() {
+            document.getElementById('modalConfirmacao').classList.add('hidden');
+            document.getElementById('erroModal').classList.add('hidden');
+        }
+        
+        // Funções da Aba Dashboard
+        async function carregarDadosAba(aba) {
+            if (aba === 'dashboard') {
+                await carregarDashboard();
+            } else if (aba === 'comparativo') {
+                await carregarComparativo();
+            }
+        }
+        
+        async function carregarDashboard() {
+            try {
+                const { data, error } = await db.from('aih_registros').select('*').order('data_emissao', { ascending: false });
+                if (error) throw error;
+                
+                allAih = data || [];
+                aplicarFiltrosDashboard();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                showToast('Erro ao carregar dados do dashboard', 'error');
+            }
+        }
+        
+        function filtrarDashboard(periodo) {
+            filtroPeriodoAtual = periodo;
+            aplicarFiltrosDashboard();
+        }
+        
+        function aplicarFiltrosDashboard() {
+            const hoje = new Date();
+            let filtrados = [...allAih];
+            
+            // Aplicar filtro de período
+            if (filtroPeriodoAtual === 'semana') {
+                const inicioSemana = new Date(hoje);
+                inicioSemana.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7));
+                const inicioSemanaStr = inicioSemana.toISOString().split('T')[0];
+                const hojeStr = hoje.toISOString().split('T')[0];
+                filtrados = filtrados.filter(a => a.data_emissao >= inicioSemanaStr && a.data_emissao <= hojeStr);
+            } else if (filtroPeriodoAtual === 'mes') {
+                const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+                const hojeStr = hoje.toISOString().split('T')[0];
+                filtrados = filtrados.filter(a => a.data_emissao >= inicioMes && a.data_emissao <= hojeStr);
+            }
+            
+            // Aplicar filtro de profissional
+            if (filtroProfissionalAtual) {
+                filtrados = filtrados.filter(a => a.nome_medico === filtroProfissionalAtual);
+            }
+            
+            filteredAih = filtrados;
+            atualizarCardsDashboard();
+            atualizarTabelaDashboard();
+        }
+        
+        function atualizarCardsDashboard() {
+            const hoje = new Date();
+            const hojeStr = hoje.toISOString().split('T')[0];
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+            const inicioSemana = new Date(hoje);
+            inicioSemana.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7));
+            const inicioSemanaStr = inicioSemana.toISOString().split('T')[0];
+            
+            document.getElementById('aihMes').textContent = allAih.filter(a => a.data_emissao >= inicioMes && a.data_emissao <= hojeStr).length;
+            document.getElementById('aihSemana').textContent = allAih.filter(a => a.data_emissao >= inicioSemanaStr && a.data_emissao <= hojeStr).length;
+            document.getElementById('aihTotal').textContent = filteredAih.length;
+        }
+        
+        function atualizarTabelaDashboard() {
+            const tbody = document.getElementById('tabelaAih');
+            tbody.innerHTML = '';
+            
+            const inicio = (paginaAtual - 1) * 20;
+            const fim = inicio + 20;
+            const pagina = filteredAih.slice(inicio, fim);
+            
+            if (pagina.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhum registro encontrado</td></tr>';
+                return;
+            }
+            
+            pagina.forEach((aih, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-2">${inicio + index + 1}</td>
+                    <td class="px-4 py-2">${formatarData(new Date(aih.data_emissao))}</td>
+                    <td class="px-4 py-2">${aih.nome_paciente}</td>
+                    <td class="px-4 py-2">${aih.nome_medico}</td>
+                    <td class="px-4 py-2">
+                        <div class="tooltip">
+                            ${aih.dados_clinicos.substring(0, 80)}${aih.dados_clinicos.length > 80 ? '...' : ''}
+                            <span class="tooltip-text">${aih.dados_clinicos}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2">
+                        <button onclick="editarRegistro(${aih.id})" class="text-blue-600 hover:text-blue-800 mr-3">Editar</button>
+                        <button onclick="excluirRegistro(${aih.id}, '${aih.nome_paciente}')" class="text-red-600 hover:text-red-800">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            atualizarPaginacao();
+        }
+        
+        function atualizarPaginacao() {
+            const totalPaginas = Math.ceil(filteredAih.length / 20);
+            document.getElementById('paginacaoInfo').textContent = `Página ${paginaAtual} de ${totalPaginas}`;
+            document.getElementById('btnAnterior').disabled = paginaAtual === 1;
+            document.getElementById('btnProxima').disabled = paginaAtual === totalPaginas;
+        }
+        
+        function paginaAnterior() {
+            if (paginaAtual > 1) {
+                paginaAtual--;
+                atualizarTabelaDashboard();
+            }
+        }
+        
+        function proximaPagina() {
+            const totalPaginas = Math.ceil(filteredAih.length / 20);
+            if (paginaAtual < totalPaginas) {
+                paginaAtual++;
+                atualizarTabelaDashboard();
+            }
+        }
+        
+        async function carregarProfissionais() {
+            try {
+                const { data, error } = await db.from('aih_registros').select('nome_medico').order('nome_medico');
+                if (error) throw error;
+                
+                const profissionais = [...new Set(data?.map(a => a.nome_medico) || [])].sort();
+                const select = document.getElementById('filtroProfissional');
+                select.innerHTML = '<option value="">Todos os profissionais</option>';
+                profissionais.forEach(prof => {
+                    const option = document.createElement('option');
+                    option.value = prof;
+                    option.textContent = prof;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar profissionais:', error);
+            }
+        }
+        
+        function filtrarPorProfissional() {
+            filtroProfissionalAtual = document.getElementById('filtroProfissional').value;
+            aplicarFiltrosDashboard();
+        }
+        
+        function limparFiltroProfissional() {
+            document.getElementById('filtroProfissional').value = '';
+            filtroProfissionalAtual = '';
+            aplicarFiltrosDashboard();
+        }
+        
+        // Funções da Aba Comparativo
+        function preencherAnos() {
+            const selectAno = document.getElementById('filtroAno');
+            const anoAtual = new Date().getFullYear();
+            selectAno.innerHTML = '';
+            
+            for (let ano = anoAtual; ano >= 2020; ano--) {
+                const option = document.createElement('option');
+                option.value = ano;
+                option.textContent = ano;
+                if (ano === anoAtual) option.selected = true;
+                selectAno.appendChild(option);
+            }
+        }
+        
+        async function carregarComparativo() {
+            try {
+                const mes = document.getElementById('filtroMes').value;
+                const ano = document.getElementById('filtroAno').value;
+                const status = document.getElementById('filtroStatus').value;
+                
+                // Carregar AIHs do período
+                const { data: aihData, error: aihError } = await db.from('aih_registros').select('*').gte('data_emissao', `${ano}-${mes}-01`).lte('data_emissao', `${ano}-${mes}-31`);
+                if (aihError) throw aihError;
+                
+                // Carregar Cirurgias do período
+                const { data: cirurgiasData, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', `${ano}-${mes}-01`).lte('data', `${ano}-${mes}-31`);
+                if (cirurgiasError) throw cirurgiasError;
+                
+                // Fazer matching
+                const aihComMatching = await fazerMatching(aihData || [], cirurgiasData || [], status);
+                
+                // Atualizar cards
+                document.getElementById('aihPeriodo').textContent = (aihData || []).length;
+                document.getElementById('cirurgiasPeriodo').textContent = (cirurgiasData || []).length;
+                document.getElementById('aihConfirmadas').textContent = aihComMatching.filter(a => a.status === 'operado').length;
+                document.getElementById('aihPendentes').textContent = aihComMatching.filter(a => a.status === 'pendente').length;
+                
+                // Atualizar tabela
+                atualizarTabelaComparativo(aihComMatching);
+                
+            } catch (error) {
+                console.error('Erro ao carregar comparativo:', error);
+                showToast('Erro ao carregar dados comparativos', 'error');
+            }
+        }
+        
+        async function fazerMatching(aihRegistros, cirurgiasRegistros, statusFiltro) {
+            return aihRegistros.map(aih => {
+                const matches = cirurgiasRegistros.filter(cirurgia => 
+                    cirurgia.paciente.toLowerCase().includes(aih.nome_paciente.toLowerCase()) ||
+                    aih.nome_paciente.toLowerCase().includes(cirurgia.paciente.toLowerCase())
+                );
+                
+                let status = 'pendente';
+                let dataCirurgia = '--';
+                let cirurgiao = '--';
+                
+                if (matches.length > 0) {
+                    status = 'operado';
+                    const matchMaisRecente = matches.sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+                    dataCirurgia = formatarData(new Date(matchMaisRecente.data));
+                    cirurgiao = matchMaisRecente.cirurgioes?.nome || '--';
+                }
+                
+                // Aplicar filtro de status
+                if (statusFiltro === 'operados' && status !== 'operado') return null;
+                if (statusFiltro === 'pendentes' && status !== 'pendente') return null;
+                
+                return {
+                    ...aih,
+                    status,
+                    dataCirurgia,
+                    cirurgiao,
+                    matches: matches.length > 0 ? matches : null
+                };
+            }).filter(Boolean);
+        }
+        
+        function atualizarComparativo() {
+            carregarComparativo();
+        }
+        
+        function atualizarTabelaComparativo(dados) {
+            const tbody = document.getElementById('tabelaComparativo');
+            tbody.innerHTML = '';
+            
+            const inicio = (paginaAtualComp - 1) * 20;
+            const fim = inicio + 20;
+            const pagina = dados.slice(inicio, fim);
+            
+            if (pagina.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhum registro encontrado</td></tr>';
+                return;
+            }
+            
+            pagina.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50';
+                
+                const statusIcon = item.status === 'operado' ? '✅' : '⏳';
+                const statusText = item.status === 'operado' ? 'Operado' : 'Pendente';
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-2">${item.nome_paciente}</td>
+                    <td class="px-4 py-2">${formatarData(new Date(item.data_emissao))}</td>
+                    <td class="px-4 py-2">${item.nome_medico}</td>
+                    <td class="px-4 py-2">
+                        <span class="font-medium">${statusIcon} ${statusText}</span>
+                        ${item.matches && item.matches.length > 1 ? `<div class="text-xs text-gray-500">(${item.matches.length} cirurgias)</div>` : ''}
+                    </td>
+                    <td class="px-4 py-2">${item.dataCirurgia}</td>
+                    <td class="px-4 py-2">${item.cirurgiao}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Atualizar paginação
+            const totalPaginas = Math.ceil(dados.length / 20);
+            document.getElementById('paginacaoInfoComp').textContent = `Página ${paginaAtualComp} de ${totalPaginas}`;
+            document.getElementById('btnAnteriorComp').disabled = paginaAtualComp === 1;
+            document.getElementById('btnProximaComp').disabled = paginaAtualComp === totalPaginas;
+        }
+        
+        function paginaAnteriorComp() {
+            if (paginaAtualComp > 1) {
+                paginaAtualComp--;
+                carregarComparativo();
+            }
+        }
+        
+        function proximaPaginaComp() {
+            const totalPaginas = Math.ceil(filteredAih.length / 20);
+            if (paginaAtualComp < totalPaginas) {
+                paginaAtualComp++;
+                carregarComparativo();
+            }
+        }
+        
+        // Funções do Modal de Edição
+        function abrirModalEdicao() {
+            document.getElementById('modalEdicao').classList.remove('hidden');
+            document.getElementById('resultadosBusca').innerHTML = '';
+            document.getElementById('formEdicao').classList.add('hidden');
+        }
+        
+        async function buscarRegistros() {
+            const termo = document.getElementById('buscaPaciente').value.trim();
+            const data = document.getElementById('buscaData').value;
+            
+            try {
+                let query = db.from('aih_registros').select('*');
+                
+                if (termo) {
+                    query = query.ilike('nome_paciente', `%${termo}%`);
+                }
+                
+                if (data) {
+                    query = query.eq('data_emissao', data);
+                }
+                
+                const { data, error } = await query.order('data_emissao', { ascending: false }).limit(50);
+                if (error) throw error;
+                
+                exibirResultadosBusca(data || []);
+                
+            } catch (error) {
+                console.error('Erro ao buscar registros:', error);
+                document.getElementById('erroEdicao').textContent = 'Erro na busca: ' + error.message;
+                document.getElementById('erroEdicao').classList.remove('hidden');
+            }
+        }
+        
+        function exibirResultadosBusca(registros) {
+            const div = document.getElementById('resultadosBusca');
+            
+            if (registros.length === 0) {
+                div.innerHTML = '<p class="text-gray-500">Nenhum registro encontrado</p>';
+                return;
+            }
+            
+            let html = '<h4 class="font-bold mb-2">Resultados:</h4>';
+            html += '<div class="border rounded overflow-hidden">';
+            html += '<table class="w-full">';
+            html += '<thead class="bg-gray-100"><tr>';
+            html += '<th class="px-4 py-2 text-left">ID</th>';
+            html += '<th class="px-4 py-2 text-left">Data</th>';
+            html += '<th class="px-4 py-2 text-left">Paciente</th>';
+            html += '<th class="px-4 py-2 text-left">Médico</th>';
+            html += '</tr></thead><tbody>';
+            
+            registros.forEach(reg => {
+                html += `<tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="carregarRegistroEdicao(${reg.id})">`;
+                html += `<td class="px-4 py-2">${reg.id}</td>`;
+                html += `<td class="px-4 py-2">${formatarData(new Date(reg.data_emissao))}</td>`;
+                html += `<td class="px-4 py-2">${reg.nome_paciente}</td>`;
+                html += `<td class="px-4 py-2">${reg.nome_medico}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            div.innerHTML = html;
+        }
+        
+        async function carregarRegistroEdicao(id) {
+            try {
+                const { data, error } = await db.from('aih_registros').select('*').eq('id', id).single();
+                if (error) throw error;
+                
+                registroEditando = data;
+                document.getElementById('editNomePaciente').value = data.nome_paciente;
+                document.getElementById('editDadosClinicos').value = data.dados_clinicos;
+                document.getElementById('editNomeMedico').value = data.nome_medico;
+                document.getElementById('formEdicao').classList.remove('hidden');
+                document.getElementById('erroEdicao').classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Erro ao carregar registro:', error);
+                document.getElementById('erroEdicao').textContent = 'Erro ao carregar registro: ' + error.message;
+                document.getElementById('erroEdicao').classList.remove('hidden');
+            }
+        }
+        
+        async function salvarAlteracao() {
+            if (!registroEditando) return;
+            
+            try {
+                const { error } = await db.from('aih_registros').update({
+                    nome_paciente: document.getElementById('editNomePaciente').value.trim(),
+                    dados_clinicos: document.getElementById('editDadosClinicos').value.trim(),
+                    nome_medico: document.getElementById('editNomeMedico').value.trim()
+                }).eq('id', registroEditando.id);
+                
+                if (error) throw error;
+                
+                showToast('Alteração salva com sucesso!', 'success');
+                fecharModalEdicao();
+                carregarDashboard();
+                
+            } catch (error) {
+                console.error('Erro ao salvar alteração:', error);
+                document.getElementById('erroEdicao').textContent = 'Erro ao salvar: ' + error.message;
+                document.getElementById('erroEdicao').classList.remove('hidden');
+            }
+        }
+        
+        function fecharModalEdicao() {
+            document.getElementById('modalEdicao').classList.add('hidden');
+            document.getElementById('erroEdicao').classList.add('hidden');
+            registroEditando = null;
+        }
+        
+        async function excluirRegistro(id, nomePaciente) {
+            if (!confirm(`Confirma exclusão do registro de ${nomePaciente}?`)) return;
+            
+            try {
+                const { error } = await db.from('aih_registros').delete().eq('id', id);
+                if (error) throw error;
+                
+                showToast('Registro excluído com sucesso!', 'success');
+                carregarDashboard();
+                
+            } catch (error) {
+                console.error('Erro ao excluir registro:', error);
+                showToast('Erro ao excluir registro', 'error');
+            }
+        }
+        
+        // Funções Utilitárias
+        function formatarData(data) {
+            return data.toLocaleDateString('pt-BR');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+        
+        // Funções de Download
+        function toggleDownloadMenu() {
+            const menu = document.getElementById('downloadMenu');
+            menu.classList.toggle('hidden');
+            
+            // Fechar menu ao clicar fora
+            document.addEventListener('click', function closeMenu(e) {
+                if (!e.target.closest('#downloadMenu') && !e.target.closest('button')) {
+                    menu.classList.add('hidden');
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }
+        
+        function downloadPDF() {
+            if (filteredAih.length === 0) {
+                showToast('Não há dados para exportar', 'error');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(16);
+            doc.text('Relatório de AIH Emitidas', 105, 15, { align: 'center' });
+            
+            // Informações do filtro
+            doc.setFontSize(10);
+            const filtroInfo = filtroProfissionalAtual ? `Filtro: ${filtroProfissionalAtual}` : 'Todos os profissionais';
+            const periodoInfo = filtroPeriodoAtual === 'semana' ? 'Esta Semana' : 
+                               filtroPeriodoAtual === 'mes' ? 'Este Mês' : 'Total';
+            doc.text(`${periodoInfo} - ${filtroInfo}`, 105, 25, { align: 'center' });
+            
+            // Preparar dados para a tabela
+            const tableData = filteredAih.map((aih, index) => [
+                index + 1,
+                formatarData(new Date(aih.data_emissao)),
+                aih.nome_paciente,
+                aih.nome_medico,
+                aih.dados_clinicos.substring(0, 50) + (aih.dados_clinicos.length > 50 ? '...' : '')
+            ]);
+            
+            // Tabela
+            doc.autoTable({
+                head: [['Nº', 'Data Emissão', 'Paciente', 'Médico', 'Dados Clínicos']],
+                body: tableData,
+                startY: 35,
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 15 },
+                    1: { cellWidth: 25 },
+                    2: { cellWidth: 40 },
+                    3: { cellWidth: 35 },
+                    4: { cellWidth: 60 }
+                },
+                headStyles: { fillColor: [0, 107, 166] }
+            });
+            
+            // Rodapé
+            const finalY = doc.lastAutoTable.finalY || 35;
+            doc.setFontSize(9);
+            doc.text(`Total de registros: ${filteredAih.length}`, 105, finalY + 10, { align: 'center' });
+            doc.text(`Gerado em: ${formatarData(new Date())}`, 105, finalY + 15, { align: 'center' });
+            
+            // Salvar
+            doc.save(`relatorio_aih_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            // Fechar menu
+            document.getElementById('downloadMenu').classList.add('hidden');
+            showToast('PDF gerado com sucesso!', 'success');
+        }
+        
+        function downloadExcel() {
+            if (filteredAih.length === 0) {
+                showToast('Não há dados para exportar', 'error');
+                return;
+            }
+            
+            // Preparar dados para Excel
+            const dadosExcel = filteredAih.map((aih, index) => ({
+                'Nº': index + 1,
+                'Data Emissão': formatarData(new Date(aih.data_emissao)),
+                'Paciente': aih.nome_paciente,
+                'Médico': aih.nome_medico,
+                'Dados Clínicos': aih.dados_clinicos,
+                'ID Registro': aih.id
+            }));
+            
+            // Criar workbook
+            const ws = XLSX.utils.json_to_sheet(dadosExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'AIH Emitidas');
+            
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 8 },   // Nº
+                { wch: 15 },  // Data Emissão
+                { wch: 30 },  // Paciente
+                { wch: 25 },  // Médico
+                { wch: 50 },  // Dados Clínicos
+                { wch: 15 }   // ID Registro
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Adicionar informações do relatório
+            const infoRelatorio = [
+                ['Relatório de AIH Emitidas'],
+                [],
+                ['Período:', filtroPeriodoAtual === 'semana' ? 'Esta Semana' : 
+                         filtroPeriodoAtual === 'mes' ? 'Este Mês' : 'Total'],
+                ['Filtro:', filtroProfissionalAtual || 'Todos os profissionais'],
+                ['Total de Registros:', filteredAih.length],
+                ['Gerado em:', formatarData(new Date())],
+                []
+            ];
+            
+            const wsInfo = XLSX.utils.aoa_to_sheet(infoRelatorio);
+            XLSX.utils.book_append_sheet(wb, wsInfo, 'Informações');
+            
+            // Salvar arquivo
+            XLSX.writeFile(wb, `relatorio_aih_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            // Fechar menu
+            document.getElementById('downloadMenu').classList.add('hidden');
+            showToast('Excel gerado com sucesso!', 'success');
+        }
+    </script>
+</body>
+</html>
