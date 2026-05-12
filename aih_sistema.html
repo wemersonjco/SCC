@@ -1352,19 +1352,16 @@
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-gray-50';
                 tr.innerHTML = `
-                    <td class="px-4 py-2">${inicio + index + 1}</td>
-                    <td class="px-4 py-2">${formatarData(new Date(aih.data_emissao))}</td>
-                    <td class="px-4 py-2">${aih.nome_paciente}</td>
-                    <td class="px-4 py-2">${aih.nome_medico}</td>
-                    <td class="px-4 py-2">
-                        <div class="tooltip">
-                            ${aih.dados_clinicos.substring(0, 80)}${aih.dados_clinicos.length > 80 ? '...' : ''}
-                            <span class="tooltip-text">${aih.dados_clinicos}</span>
-                        </div>
+                    <td class="table-cell">${inicio + index + 1}</td>
+                    <td class="table-cell">${formatarData(aih.data_emissao)}</td>
+                    <td class="table-cell">${aih.nome_paciente}</td>
+                    <td class="table-cell">${aih.nome_medico}</td>
+                    <td class="table-cell">
+                        <div class="text-sm text-gray-600">${aih.dados_clinicos.substring(0, 50)}${aih.dados_clinicos.length > 50 ? '...' : ''}</div>
                     </td>
-                    <td class="px-4 py-2">
-                        <button onclick="editarRegistro(${aih.id})" class="text-blue-600 hover:text-blue-800 mr-3">Editar</button>
-                        <button onclick="excluirRegistro(${aih.id}, '${aih.nome_paciente}')" class="text-red-600 hover:text-red-800">Excluir</button>
+                    <td class="table-cell">
+                        <button onclick="editarRegistro(${aih.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition">✏️ Editar</button>
+                        <button onclick="excluirRegistro(${aih.id}, '${aih.nome_paciente.replace(/'/g, "\\'")}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition ml-2">🗑️ Excluir</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1547,7 +1544,7 @@
                 tr.innerHTML = `
                     <td class="table-cell">${inicio + index + 1}</td>
                     <td class="table-cell">${item.nome_paciente}</td>
-                    <td class="table-cell">${formatarData(new Date(item.data_emissao))}</td>
+                    <td class="table-cell">${formatarData(item.data_emissao)}</td>
                     <td class="table-cell">${item.nome_medico}</td>
                     <td class="table-cell">
                         <span class="font-medium">${statusIcon} ${statusText}</span>
@@ -1586,6 +1583,11 @@
             document.getElementById('modalEdicao').classList.remove('hidden');
             document.getElementById('resultadosBusca').innerHTML = '';
             document.getElementById('formEdicao').classList.add('hidden');
+        }
+        
+        function editarRegistro(id) {
+            abrirModalEdicao();
+            carregarRegistroEdicao(id);
         }
         
         async function buscarRegistros() {
@@ -1635,10 +1637,10 @@
             
             registros.forEach(reg => {
                 html += `<tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="carregarRegistroEdicao(${reg.id})">`;
-                html += `<td class="px-4 py-2">${reg.id}</td>`;
-                html += `<td class="px-4 py-2">${formatarData(new Date(reg.data_emissao))}</td>`;
-                html += `<td class="px-4 py-2">${reg.nome_paciente}</td>`;
-                html += `<td class="px-4 py-2">${reg.nome_medico}</td>`;
+                html += `<td class="table-cell">${reg.id}</td>`;
+                html += `<td class="table-cell">${formatarData(reg.data_emissao)}</td>`;
+                html += `<td class="table-cell">${reg.nome_paciente}</td>`;
+                html += `<td class="table-cell">${reg.nome_medico}</td>`;
                 html += '</tr>';
             });
             
@@ -1775,7 +1777,7 @@
             // Preparar dados para a tabela
             const tableData = filteredAih.map((aih, index) => [
                 index + 1,
-                formatarData(new Date(aih.data_emissao)),
+                formatarData(aih.data_emissao),
                 aih.nome_paciente,
                 aih.nome_medico,
                 aih.dados_clinicos.substring(0, 50) + (aih.dados_clinicos.length > 50 ? '...' : '')
@@ -1820,7 +1822,7 @@
             // Preparar dados para Excel
             const dadosExcel = filteredAih.map((aih, index) => ({
                 'Nº': index + 1,
-                'Data Emissão': formatarData(new Date(aih.data_emissao)),
+                'Data Emissão': formatarData(aih.data_emissao),
                 'Paciente': aih.nome_paciente,
                 'Médico': aih.nome_medico,
                 'Dados Clínicos': aih.dados_clinicos,
