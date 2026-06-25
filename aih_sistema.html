@@ -1534,16 +1534,42 @@
                 const ano = document.getElementById('filtroAno').value;
                 const status = document.getElementById('filtroStatus').value;
                 
+                console.log('Parâmetros do comparativo:', { mes, ano, status });
+                
+                // Validar parâmetros
+                if (!mes || !ano) {
+                    console.error('Parâmetros inválidos:', { mes, ano });
+                    showToast('Selecione mês e ano', 'error');
+                    return;
+                }
+                
+                // Calcular último dia do mês corretamente
+                const ultimoDiaMes = new Date(ano, mes, 0).getDate();
+                const dataInicio = `${ano}-${mes}-01`;
+                const dataFim = `${ano}-${mes}-${ultimoDiaMes}`;
+                
+                console.log('Período da consulta:', { dataInicio, dataFim });
+                
                 // Carregar AIHs do período
-                const { data: aihData, error: aihError } = await db.from('aih_registros').select('*').gte('data_emissao', `${ano}-${mes}-01`).lte('data_emissao', `${ano}-${mes}-31`);
-                if (aihError) throw aihError;
+                const { data: aihData, error: aihError } = await db.from('aih_registros').select('*').gte('data_emissao', dataInicio).lte('data_emissao', dataFim);
+                
+                if (aihError) {
+                    console.error('Erro detalhado do Supabase (AIH):', aihError);
+                    console.error('Mensagem:', aihError.message);
+                    console.error('Detalhes:', aihError.details);
+                    console.error('Hint:', aihError.hint);
+                    throw aihError;
+                }
+                
+                console.log('AIHs carregadas:', aihData?.length || 0);
                 
                 // Carregar Cirurgias do período (com tratamento de erro)
                 let cirurgiasData = [];
                 try {
-                    const { data: cirurgiasResult, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', `${ano}-${mes}-01`).lte('data', `${ano}-${mes}-31`);
+                    const { data: cirurgiasResult, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', dataInicio).lte('data', dataFim);
                     if (!cirurgiasError) {
                         cirurgiasData = cirurgiasResult || [];
+                        console.log('Cirurgias carregadas:', cirurgiasData.length);
                     } else {
                         console.warn('Tabela cirurgias não disponível:', cirurgiasError);
                     }
@@ -1565,6 +1591,8 @@
                 
             } catch (error) {
                 console.error('Erro ao carregar comparativo:', error);
+                console.error('Mensagem do erro:', error.message);
+                console.error('Stack do erro:', error.stack);
                 showToast('Erro ao carregar dados comparativos', 'error');
             }
         }
