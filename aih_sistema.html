@@ -892,6 +892,13 @@
                     </select>
                     <button onclick="limparFiltroProfissional()" class="button-large bg-gray-500 text-white rounded hover:bg-gray-600 transition">Limpar filtro</button>
                 </div>
+                
+                <div class="flex items-center gap-4 mb-6">
+                    <label class="label-large">Procurar Paciente:</label>
+                    <input type="text" id="buscaPaciente" placeholder="Digite o nome do paciente" class="input-large flex-1">
+                    <button onclick="buscarPaciente()" class="button-large bg-blue-600 text-white rounded hover:bg-blue-700 transition">🔍 Procurar</button>
+                    <button onclick="limparBuscaPaciente()" class="button-large bg-gray-500 text-white rounded hover:bg-gray-600 transition">Limpar busca</button>
+                </div>
             </div>
 
             <!-- Cards de Métricas -->
@@ -1471,6 +1478,28 @@
             aplicarFiltrosDashboard();
         }
         
+        function buscarPaciente() {
+            const termoBusca = document.getElementById('buscaPaciente').value.trim().toLowerCase();
+            if (!termoBusca) {
+                showToast('Digite um nome para buscar', 'error');
+                return;
+            }
+            
+            filteredAih = allAih.filter(aih => 
+                aih.nome_paciente.toLowerCase().includes(termoBusca)
+            );
+            
+            paginaAtual = 1;
+            atualizarTabelaAih();
+            atualizarPaginacao();
+            showToast(`Encontrado(s) ${filteredAih.length} registro(s)`, 'success');
+        }
+        
+        function limparBuscaPaciente() {
+            document.getElementById('buscaPaciente').value = '';
+            aplicarFiltrosDashboard();
+        }
+        
         // Funções da Aba Comparativo
         function preencherAnos() {
             const selectAno = document.getElementById('filtroAno');
@@ -1509,16 +1538,25 @@
                 const { data: aihData, error: aihError } = await db.from('aih_registros').select('*').gte('data_emissao', `${ano}-${mes}-01`).lte('data_emissao', `${ano}-${mes}-31`);
                 if (aihError) throw aihError;
                 
-                // Carregar Cirurgias do período
-                const { data: cirurgiasData, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', `${ano}-${mes}-01`).lte('data', `${ano}-${mes}-31`);
-                if (cirurgiasError) throw cirurgiasError;
+                // Carregar Cirurgias do período (com tratamento de erro)
+                let cirurgiasData = [];
+                try {
+                    const { data: cirurgiasResult, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', `${ano}-${mes}-01`).lte('data', `${ano}-${mes}-31`);
+                    if (!cirurgiasError) {
+                        cirurgiasData = cirurgiasResult || [];
+                    } else {
+                        console.warn('Tabela cirurgias não disponível:', cirurgiasError);
+                    }
+                } catch (e) {
+                    console.warn('Não foi possível carregar cirurgias:', e);
+                }
                 
                 // Fazer matching
                 const aihComMatching = await fazerMatching(aihData || [], cirurgiasData || [], status);
                 
                 // Atualizar cards
                 document.getElementById('aihPeriodo').textContent = (aihData || []).length;
-                document.getElementById('cirurgiasPeriodo').textContent = (cirurgiasData || []).length;
+                document.getElementById('cirurgiasPeriodo').textContent = cirurgiasData.length;
                 document.getElementById('aihConfirmadas').textContent = aihComMatching.filter(a => a.status === 'operado').length;
                 document.getElementById('aihPendentes').textContent = aihComMatching.filter(a => a.status === 'pendente').length;
                 
