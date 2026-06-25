@@ -580,6 +580,19 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
         document.getElementById('cirurgiaForm').addEventListener('submit',async(e)=>{
             e.preventDefault();
             const data=document.getElementById('dataCirurgia').value;
+            const paciente=document.getElementById('nomePaciente').value.trim();
+            
+            // Verificar se já existe cirurgia deste paciente na mesma data
+            const{data:existing,error:checkError}=await db.from('cirurgias').select('*').eq('paciente',paciente).eq('data',data);
+            if(checkError){
+                showMessage('formMessage','Erro ao verificar duplicidade: '+checkError.message,'error');
+                return;
+            }
+            if(existing&&existing.length>0){
+                showMessage('formMessage','⚠️ Este paciente já possui uma cirurgia registrada nesta data!','error');
+                return;
+            }
+            
             const numeroMes=await getNextNumeroMes(data);
             
             // Verificação adicional para evitar duplicatas
@@ -590,7 +603,7 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
             
             const a1=document.getElementById('auxiliar1Select').value;
             const a2=document.getElementById('auxiliar2Select').value;
-            const cir={paciente:document.getElementById('nomePaciente').value.trim(),data:data,numero_mes:numeroMes,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
+            const cir={paciente:paciente,data:data,numero_mes:numeroMes,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
             try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;showMessage('formMessage','Cirurgia registrada! Nº '+numeroMes,'success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
         });
 
