@@ -1480,17 +1480,23 @@
         
         function buscarPaciente() {
             const termoBusca = document.getElementById('buscaPaciente').value.trim().toLowerCase();
+            console.log('Buscando paciente:', termoBusca);
+            console.log('Total de AIH carregadas:', allAih.length);
+            
             if (!termoBusca) {
                 showToast('Digite um nome para buscar', 'error');
                 return;
             }
             
-            filteredAih = allAih.filter(aih => 
-                aih.nome_paciente.toLowerCase().includes(termoBusca)
-            );
+            filteredAih = allAih.filter(aih => {
+                const nomePaciente = aih.nome_paciente || '';
+                return nomePaciente.toLowerCase().includes(termoBusca);
+            });
+            
+            console.log('AIH encontradas:', filteredAih.length);
             
             paginaAtual = 1;
-            atualizarTabelaAih();
+            atualizarTabelaDashboard();
             atualizarPaginacao();
             showToast(`Encontrado(s) ${filteredAih.length} registro(s)`, 'success');
         }
