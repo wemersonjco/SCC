@@ -997,7 +997,25 @@
 
             <!-- Tabela Comparativa -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="card-title mb-4">AIH × Cirurgias</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">AIH × Cirurgias</h3>
+                    <div class="relative">
+                        <button onclick="toggleDownloadMenuComp()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex items-center gap-2">
+                            📥 Download
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="downloadMenuComp" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <button onclick="downloadPDFComparativo()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                                📄 Download PDF
+                            </button>
+                            <button onclick="downloadExcelComparativo()" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                                📊 Download Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-100">
@@ -1105,6 +1123,7 @@
         let filtroProfissionalAtual = '';
         let filtroPeriodoAtual = 'total';
         let registroEditando = null;
+        let filteredComparativo = [];
         
         // Inicializar Supabase
         try {
@@ -1540,6 +1559,9 @@
                 // Fazer matching
                 const aihComMatching = await fazerMatching(aihData || [], cirurgiasData || [], status);
                 
+                // Armazenar dados filtrados para exportação
+                filteredComparativo = aihComMatching;
+                
                 // Atualizar cards
                 document.getElementById('aihPeriodo').textContent = (aihData || []).length;
                 document.getElementById('aihConfirmadas').textContent = aihComMatching.filter(a => a.status === 'operado').length;
@@ -1953,6 +1975,152 @@
             
             // Fechar menu
             document.getElementById('downloadMenu').classList.add('hidden');
+            showToast('Excel gerado com sucesso!', 'success');
+        }
+        
+        // Funções de Download do Comparativo
+        function toggleDownloadMenuComp() {
+            const menu = document.getElementById('downloadMenuComp');
+            menu.classList.toggle('hidden');
+            
+            if (!menu.classList.contains('hidden')) {
+                document.addEventListener('click', closeMenuComp);
+            } else {
+                document.removeEventListener('click', closeMenuComp);
+            }
+        }
+        
+        function closeMenuComp(event) {
+            const menu = document.getElementById('downloadMenuComp');
+            const button = event.target.closest('button');
+            if (!button || !button.onclick || !button.onclick.toString().includes('toggleDownloadMenuComp')) {
+                if (!menu.contains(event.target)) {
+                    menu.classList.add('hidden');
+                    document.removeEventListener('click', closeMenuComp);
+                }
+            }
+        }
+        
+        function downloadPDFComparativo() {
+            if (filteredComparativo.length === 0) {
+                showToast('Não há dados para exportar', 'error');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(16);
+            doc.text('Relatório Comparativo AIH × Cirurgias', 105, 15, { align: 'center' });
+            
+            // Informações do filtro
+            doc.setFontSize(10);
+            const status = document.getElementById('filtroStatus').value;
+            const statusInfo = status === 'todos' ? 'Todos os status' : 
+                              status === 'operados' ? 'Apenas operados' : 'Apenas pendentes';
+            doc.text(`Filtro: ${statusInfo}`, 105, 25, { align: 'center' });
+            
+            // Preparar dados para a tabela
+            const tableData = filteredComparativo.map((item, index) => [
+                index + 1,
+                item.nome_paciente,
+                formatarData(item.data_emissao),
+                item.nome_medico,
+                item.status === 'operado' ? '✅ Operado' : '⏳ Pendente',
+                item.dataCirurgia,
+                item.cirurgiao
+            ]);
+            
+            // Tabela
+            doc.autoTable({
+                head: [['Nº', 'Paciente AIH', 'Data AIH', 'Médico AIH', 'Status', 'Data Cirurgia', 'Cirurgião']],
+                body: tableData,
+                startY: 35,
+                styles: { fontSize: 7 },
+                columnStyles: {
+                    0: { cellWidth: 10 },
+                    1: { cellWidth: 35 },
+                    2: { cellWidth: 20 },
+                    3: { cellWidth: 30 },
+                    4: { cellWidth: 20 },
+                    5: { cellWidth: 20 },
+                    6: { cellWidth: 30 }
+                },
+                headStyles: { fillColor: [0, 107, 166] }
+            });
+            
+            // Rodapé
+            const finalY = doc.lastAutoTable.finalY || 35;
+            doc.setFontSize(9);
+            doc.text(`Total de registros: ${filteredComparativo.length}`, 105, finalY + 10, { align: 'center' });
+            doc.text(`Gerado em: ${formatarData(new Date())}`, 105, finalY + 15, { align: 'center' });
+            
+            // Salvar
+            doc.save(`relatorio_comparativo_aih_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            // Fechar menu
+            document.getElementById('downloadMenuComp').classList.add('hidden');
+            showToast('PDF gerado com sucesso!', 'success');
+        }
+        
+        function downloadExcelComparativo() {
+            if (filteredComparativo.length === 0) {
+                showToast('Não há dados para exportar', 'error');
+                return;
+            }
+            
+            // Preparar dados para Excel
+            const dadosExcel = filteredComparativo.map((item, index) => ({
+                'Nº': index + 1,
+                'Paciente AIH': item.nome_paciente,
+                'Data AIH': formatarData(item.data_emissao),
+                'Médico AIH': item.nome_medico,
+                'Status': item.status === 'operado' ? 'Operado' : 'Pendente',
+                'Data Cirurgia': item.dataCirurgia,
+                'Cirurgião': item.cirurgiao,
+                'ID Registro': item.id
+            }));
+            
+            // Criar workbook
+            const ws = XLSX.utils.json_to_sheet(dadosExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Comparativo AIH');
+            
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 8 },   // Nº
+                { wch: 30 },  // Paciente AIH
+                { wch: 15 },  // Data AIH
+                { wch: 25 },  // Médico AIH
+                { wch: 15 },  // Status
+                { wch: 15 },  // Data Cirurgia
+                { wch: 25 },  // Cirurgião
+                { wch: 15 }   // ID Registro
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Adicionar informações do relatório
+            const status = document.getElementById('filtroStatus').value;
+            const statusInfo = status === 'todos' ? 'Todos os status' : 
+                              status === 'operados' ? 'Apenas operados' : 'Apenas pendentes';
+            const infoRelatorio = [
+                ['Relatório Comparativo AIH × Cirurgias'],
+                [],
+                ['Filtro:', statusInfo],
+                ['Total de Registros:', filteredComparativo.length],
+                ['Gerado em:', formatarData(new Date())],
+                []
+            ];
+            
+            // Inserir informações no início da planilha
+            XLSX.utils.sheet_add_aoa(ws, infoRelatorio, { origin: 'A1' });
+            
+            // Salvar
+            XLSX.writeFile(wb, `relatorio_comparativo_aih_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            // Fechar menu
+            document.getElementById('downloadMenuComp').classList.add('hidden');
             showToast('Excel gerado com sucesso!', 'success');
         }
 
