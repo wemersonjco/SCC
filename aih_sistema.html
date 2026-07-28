@@ -967,30 +967,7 @@
         <div id="comparativoTab" class="tab-content hidden">
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h3 class="card-title mb-4">Filtros do Comparativo</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <label class="label-large">Mês:</label>
-                        <select id="filtroMes" onchange="atualizarComparativo()" class="select-large">
-                            <option value="01">Janeiro</option>
-                            <option value="02">Fevereiro</option>
-                            <option value="03">Março</option>
-                            <option value="04">Abril</option>
-                            <option value="05">Maio</option>
-                            <option value="06">Junho</option>
-                            <option value="07">Julho</option>
-                            <option value="08">Agosto</option>
-                            <option value="09">Setembro</option>
-                            <option value="10">Outubro</option>
-                            <option value="11">Novembro</option>
-                            <option value="12">Dezembro</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label-large">Ano:</label>
-                        <select id="filtroAno" onchange="atualizarComparativo()" class="select-large">
-                            <!-- Preenchido dinamicamente -->
-                        </select>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
                     <div>
                         <label class="label-large">Status:</label>
                         <select id="filtroStatus" onchange="atualizarComparativo()" class="select-large">
@@ -1003,17 +980,13 @@
             </div>
 
             <!-- Cards de Métricas do Comparativo -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="metric-label">AIH emitidas no período</h3>
+                    <h3 class="metric-label">AIH emitidas</h3>
                     <p id="aihPeriodo" class="metric-value text-blue-600 mt-2">0</p>
                 </div>
                 <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="metric-label">Cirurgias realizadas no período</h3>
-                    <p id="cirurgiasPeriodo" class="metric-value text-green-600 mt-2">0</p>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="metric-label">AIH com cirurgia confirmada</h3>
+                    <h3 class="metric-label">AIH com cirurgias confirmadas</h3>
                     <p id="aihConfirmadas" class="metric-value text-purple-600 mt-2">0</p>
                 </div>
                 <div class="bg-white rounded-lg shadow-md p-6">
@@ -1165,8 +1138,6 @@
         // Inicialização
         window.addEventListener('DOMContentLoaded', () => {
             preencherDataAtual();
-            preencherAnos();
-            preencherMesAtual();
             carregarDadosAba('emissao');
             carregarProfissionais();
         });
@@ -1326,7 +1297,6 @@
             if (aba === 'dashboard') {
                 await carregarDashboard();
             } else if (aba === 'comparativo') {
-                preencherMesAtual(); // Pré-selecionar mês atual
                 await carregarComparativo();
             }
         }
@@ -1536,28 +1506,12 @@
         
         async function carregarComparativo() {
             try {
-                const mes = document.getElementById('filtroMes').value;
-                const ano = document.getElementById('filtroAno').value;
                 const status = document.getElementById('filtroStatus').value;
                 
-                console.log('Parâmetros do comparativo:', { mes, ano, status });
+                console.log('Parâmetros do comparativo:', { status });
                 
-                // Validar parâmetros
-                if (!mes || !ano) {
-                    console.error('Parâmetros inválidos:', { mes, ano });
-                    showToast('Selecione mês e ano', 'error');
-                    return;
-                }
-                
-                // Calcular último dia do mês corretamente
-                const ultimoDiaMes = new Date(ano, mes, 0).getDate();
-                const dataInicio = `${ano}-${mes}-01`;
-                const dataFim = `${ano}-${mes}-${ultimoDiaMes}`;
-                
-                console.log('Período da consulta:', { dataInicio, dataFim });
-                
-                // Carregar AIHs do período
-                const { data: aihData, error: aihError } = await db.from('aih_registros').select('*').gte('data_emissao', dataInicio).lte('data_emissao', dataFim);
+                // Carregar todas as AIHs
+                const { data: aihData, error: aihError } = await db.from('aih_registros').select('*');
                 
                 if (aihError) {
                     console.error('Erro detalhado do Supabase (AIH):', aihError);
@@ -1569,10 +1523,10 @@
                 
                 console.log('AIHs carregadas:', aihData?.length || 0);
                 
-                // Carregar Cirurgias do período (com tratamento de erro)
+                // Carregar todas as Cirurgias (com tratamento de erro)
                 let cirurgiasData = [];
                 try {
-                    const { data: cirurgiasResult, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)').gte('data', dataInicio).lte('data', dataFim);
+                    const { data: cirurgiasResult, error: cirurgiasError } = await db.from('cirurgias').select('*, cirurgioes!cirurgiao_id(nome)');
                     if (!cirurgiasError) {
                         cirurgiasData = cirurgiasResult || [];
                         console.log('Cirurgias carregadas:', cirurgiasData.length);
@@ -1588,7 +1542,6 @@
                 
                 // Atualizar cards
                 document.getElementById('aihPeriodo').textContent = (aihData || []).length;
-                document.getElementById('cirurgiasPeriodo').textContent = cirurgiasData.length;
                 document.getElementById('aihConfirmadas').textContent = aihComMatching.filter(a => a.status === 'operado').length;
                 document.getElementById('aihPendentes').textContent = aihComMatching.filter(a => a.status === 'pendente').length;
                 
@@ -1603,12 +1556,27 @@
             }
         }
         
+        // Função para normalizar nomes (remover acentos, ç, converter para maiúsculas)
+        function normalizarNome(nome) {
+            if (!nome) return '';
+            return nome
+                .toUpperCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+                .replace(/Ç/g, 'C')
+                .replace(/ç/g, 'C')
+                .trim();
+        }
+
         async function fazerMatching(aihRegistros, cirurgiasRegistros, statusFiltro) {
             return aihRegistros.map(aih => {
-                const matches = cirurgiasRegistros.filter(cirurgia => 
-                    cirurgia.paciente.toLowerCase().includes(aih.nome_paciente.toLowerCase()) ||
-                    aih.nome_paciente.toLowerCase().includes(cirurgia.paciente.toLowerCase())
-                );
+                const nomeAihNormalizado = normalizarNome(aih.nome_paciente);
+                
+                const matches = cirurgiasRegistros.filter(cirurgia => {
+                    const nomeCirurgiaNormalizado = normalizarNome(cirurgia.paciente);
+                    return nomeCirurgiaNormalizado.includes(nomeAihNormalizado) || 
+                           nomeAihNormalizado.includes(nomeCirurgiaNormalizado);
+                });
                 
                 let status = 'pendente';
                 let dataCirurgia = '--';
