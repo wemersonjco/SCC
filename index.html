@@ -91,9 +91,10 @@
             <div id="dashboardTab" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-bold mb-4 text-gray-800">Filtros</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <button onclick="filterByPeriod('today')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📅 Hoje</button>
                         <button onclick="filterByPeriod('month')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📆 Este Mês</button>
+                        <button onclick="filterByPeriod('previousMonth')" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">📅 Mês Anterior</button>
                         <button onclick="filterByPeriod('year')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">📊 Este Ano</button>
                         <button onclick="showCustomDateFilter()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">🔍 Personalizado</button>
                     </div>
@@ -393,6 +394,10 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
             const t=new Date();t.setHours(0,0,0,0);const ts=t.toISOString().split('T')[0];
             if(p==='today')filteredCirurgias=allCirurgias.filter(c=>c.data===ts);
             else if(p==='month')filteredCirurgias=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');return d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();});
+            else if(p==='previousMonth'){
+                const mesAnterior=new Date(t.getFullYear(),t.getMonth()-1,1);
+                filteredCirurgias=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');return d.getMonth()===mesAnterior.getMonth()&&d.getFullYear()===mesAnterior.getFullYear();});
+            }
             else if(p==='year')filteredCirurgias=allCirurgias.filter(c=>{const d=new Date(c.data+'T12:00:00');return d.getFullYear()===t.getFullYear();});
             updateDashboard();
         }
