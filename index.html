@@ -343,7 +343,7 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
             }
         }
 
-        async function deleteCirurgia(id){if(!confirm('Excluir?'))return;try{const{error}=await db.from('cirurgias').delete().eq('id',id);if(error)throw error;await loadCirurgias();}catch(e){alert('Erro: '+e.message);}}
+        async function deleteCirurgia(id){if(!confirm('Excluir?'))return;try{const{error}=await db.from('cirurgias').delete().eq('id',id);if(error)throw error;await atualizarNumeracaoMes();await loadCirurgias();}catch(e){alert('Erro: '+e.message);}}
 
         async function editCirurgia(id){
             const c=allCirurgias.find(x=>x.id===id);if(!c)return;
@@ -383,7 +383,7 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
                 const a1=document.getElementById('editAuxiliar1').value;
                 const a2=document.getElementById('editAuxiliar2').value;
                 const update={paciente:document.getElementById('editPaciente').value.trim(),data:document.getElementById('editData').value,cirurgiao_id:parseInt(document.getElementById('editCirurgiao').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('editObservacoes').value.trim()};
-                try{const{error}=await db.from('cirurgias').update(update).eq('id',id);if(error)throw error;await loadCirurgias();modal.remove();alert('Atualizado!');}catch(e){alert('Erro: '+e.message);}
+                try{const{error}=await db.from('cirurgias').update(update).eq('id',id);if(error)throw error;await atualizarNumeracaoMes();await loadCirurgias();modal.remove();alert('Atualizado!');}catch(e){alert('Erro: '+e.message);}
             });
         }
 
@@ -604,7 +604,7 @@ CREATE POLICY "Permitir tudo" ON cirurgias FOR ALL USING (true) WITH CHECK (true
             const a1=document.getElementById('auxiliar1Select').value;
             const a2=document.getElementById('auxiliar2Select').value;
             const cir={paciente:paciente,data:data,numero_mes:numeroMes,cirurgiao_id:parseInt(document.getElementById('cirurgiaoSelect').value),auxiliar1_id:a1?parseInt(a1):null,auxiliar2_id:a2?parseInt(a2):null,observacoes:document.getElementById('observacoes').value.trim()};
-            try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;showMessage('formMessage','Cirurgia registrada! Nº '+numeroMes,'success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
+            try{const{error}=await db.from('cirurgias').insert([cir]);if(error)throw error;await atualizarNumeracaoMes();showMessage('formMessage','Cirurgia registrada! Nº '+numeroMes,'success');document.getElementById('cirurgiaForm').reset();setTodayDate();await loadCirurgias();}catch(e){showMessage('formMessage','Erro: '+e.message,'error');}
         });
 
         window.addEventListener('DOMContentLoaded',()=>{
